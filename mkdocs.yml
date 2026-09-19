@@ -1,6 +1,6 @@
 site_name: STM32F401 Bare-Metal Firmware Notes
-site_author: Parikshith
-repo_url: https://github.com/<your-username>/<your-repo-name>
+site_author: Demon-Lord-10
+repo_url: https://github.com/Demon-Lord-10/Bare-Metal
 
 theme:
   name: readthedocs
