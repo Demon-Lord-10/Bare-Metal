@@ -1,0 +1,19 @@
+site_name: STM32F401 Bare-Metal Firmware Notes
+site_author: Parikshith
+repo_url: https://github.com/<your-username>/<your-repo-name>
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - c
+    - cpp
+    - armasm
+    - ld
+
+nav:
+  - Home: index.md
+  - Linker Script:
+      - Memory Layout & Sections: 01_memory_and_linker/linker_script.md
+  - Startup Code:
+      - Reset Handler & Boot: 02_startup_and_boot/startup_assembly.md
