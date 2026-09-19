@@ -67,8 +67,8 @@ Here is the full `startup.s` with every line explained.
 
 | Directive | Meaning |
 |-----------|---------|
-| `.cpu cortex-m4` | Tell the assembler to accept only instructions valid on the Cortex-M4 (ARMv7E-M architecture). This enables DSP instructions and optional FPU instructions. |
-| `.thumb` | Use the **Thumb-2** instruction set. Cortex-M4 *only* supports Thumb/Thumb-2 — it cannot execute classic 32-bit ARM instructions. All vector table entries must have bit 0 set (indicating Thumb mode), which the assembler handles automatically. |
+| `.cpu cortex-m4` | Tell the assembler to accept only instructions valid on the Cortex-M4 (ARMv7E-M architecture).<br>This enables DSP instructions and optional FPU instructions. |
+| `.thumb` | Use the **Thumb-2** instruction set. Cortex-M4 *only* supports Thumb/Thumb-2 — it cannot execute classic 32-bit ARM instructions.<br>All vector table entries must have bit 0 set (indicating Thumb mode), which the assembler handles automatically. |
 
 ---
 
