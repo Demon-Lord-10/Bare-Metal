@@ -229,7 +229,7 @@ The linker script and startup assembly are tightly coupled through **symbols**. 
   Linker Script (linker.ld)              Startup Assembly (startup.s)
   ─────────────────────────              ──────────────────────────────
   _estack = top of RAM         ───▶     .word _estack        (vector table, offset 0x00)
-  ENTRY(reset_handler)          ◀───     .global reset_handler
+  ENTRY(reset_handler)         ◀───     .global reset_handler
 
   _sidata = LOADADDR(.data)    ───▶     ldr r2, =_sidata     (Flash source address)
   _sdata  = start of .data     ───▶     ldr r0, =_sdata      (RAM destination start)
