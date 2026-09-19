@@ -52,9 +52,9 @@ The Cortex-M4 uses a fixed 4 GB address space. The STM32F401CCU6 populates it li
               │   (Reserved)             │
               │                          │
   0x0806_0000 ├──────────────────────────┤
-              │████████████████████████████│
-              │████  Flash (384 KB) ████████│  ← .vectors, .text, .rodata, .data (LMA)
-              │████████████████████████████│
+              │██████████████████████████│
+              │████  Flash (384 KB) █████│  ← .vectors, .text, .rodata, .data (LMA)
+              │██████████████████████████│
   0x0800_0000 ├──────────────────────────┤
               │   Aliased to Flash       │
               │   (boot area)            │
