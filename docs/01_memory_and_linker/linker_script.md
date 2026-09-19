@@ -209,7 +209,7 @@ So at boot, the startup code must **copy** the initial values from Flash (LMA) t
   │  .text       │                   │              │
   │  .rodata     │                   │              │
   ├──────────────┤                   ├──────────────┤
-  │  .data (LMA) │ ──── copy ────▶  │  .data (VMA) │
+  │  .data (LMA) │ ──── copy ────▶   │  .data (VMA) │
   │  _sidata     │    at boot        │  _sdata      │
   │              │                   │  _edata      │
   └──────────────┘                   ├──────────────┤
