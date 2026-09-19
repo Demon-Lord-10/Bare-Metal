@@ -1,0 +1,3 @@
+-Iinc
+-Iinc/CMSIS
+-DSTM32F401xC

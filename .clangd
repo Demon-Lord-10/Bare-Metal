@@ -1,0 +1,8 @@
+CompileFlags:
+  Add:
+    - -Iinc
+    - -Iinc/CMSIS
+    - -DSTM32F401xC
+  Remove:
+    - -m*
+    - --target=*
