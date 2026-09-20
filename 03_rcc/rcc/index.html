@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Demon-Lord-10" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Reset and Clock Control (RCC) - STM32F401 Bare-Metal Firmware Notes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Reset and Clock Control (RCC)";
+        var mkdocs_page_input_path = "03_rcc/rcc.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/c.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/cpp.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/armasm.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/ld.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> STM32F401 Bare-Metal Firmware Notes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Linker Script</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">Memory Layout & Sections</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Startup Code</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">Reset Handler & Boot</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">STM32F401 Bare-Metal Firmware Notes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Reset and Clock Control (RCC)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/Demon-Lord-10/Bare-Metal/edit/master/docs/03_rcc/rcc.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reset-and-clock-control-rcc">Reset and Clock Control (RCC)<a class="headerlink" href="#reset-and-clock-control-rcc" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The <strong>Reset and Clock Control (RCC)</strong> peripheral is the heartbeat of the STM32 microcontroller. On modern ARM Cortex-M microcontrollers, power efficiency is a primary architectural goal. Consequently, <strong>every peripheral is clock-gated (powered off) by default</strong>.</p>
+<p>Before you can read or write to any peripheral register — whether it is a GPIO port, a timer, an ADC, or a UART controller — you must first enable its clock through the RCC. Attempting to access a peripheral's registers while its clock is disabled results in either silent failure (writes are ignored) or a <strong>BusFault / HardFault</strong>.</p>
+<hr />
+<h2 id="the-stm32f401-clock-tree">The STM32F401 Clock Tree<a class="headerlink" href="#the-stm32f401-clock-tree" title="Permanent link">&para;</a></h2>
+<p>The STM32F401CCU6 can operate at clock frequencies up to <strong>84 MHz</strong>. To achieve this, it features several internal and external clock sources routed through a Phase-Locked Loop (PLL).</p>
+<pre><code>  Oscillator Sources             Prescalers &amp; PLL                   System Clocks
+ ────────────────────           ──────────────────                 ───────────────
+
+  ┌───────────────┐
+  │  HSI (16 MHz) │──────┐
+  └───────────────┘      │
+                         ├────▶ [ SW Mux ] ───────────────────────▶ SYSCLK (up to 84 MHz)
+  ┌───────────────┐      │         ▲                                    │
+  │  HSE (25 MHz) │──┬───┘         │                                    ▼
+  └───────────────┘  │             │                            ┌───────────────┐
+                     │      ┌──────────────┐                    │ AHB Prescaler │
+                     └─────▶│     PLL      │───────────────────▶│   (HPRE)      │
+                            │ (M, N, P, Q) │                    └───────────────┘
+                            └──────────────┘                            │
+                                                                        ├────────▶ HCLK (Core, Memory, DMA)
+                                                                        │          (up to 84 MHz)
+                                                                        │
+                                                                        ├────────▶ AHB1/AHB2 Peripherals
+                                                                        │          (GPIO, RCC, USB...)
+                                                                        │
+                                                                        ▼
+                                                                ┌───────────────┐
+                                                                │ APB Prescalers│
+                                                                │(PPRE1 / PPRE2)│
+                                                                └───────────────┘
+                                                                   │         │
+                                              APB1 (max 42 MHz) ───┘         └─── APB2 (max 84 MHz)
+                                              (TIM2-5, I2C, SPI2/3, USART2)      (TIM1, USART1/6, SPI1/4, ADC)
+</code></pre>
+<h3 id="clock-sources">Clock Sources<a class="headerlink" href="#clock-sources" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Name</th>
+<th>Typical Frequency</th>
+<th>Characteristics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HSI</strong></td>
+<td>High-Speed Internal</td>
+<td>16 MHz</td>
+<td>Built-in RC oscillator. Available instantly at power-up; slightly temperature-sensitive.</td>
+</tr>
+<tr>
+<td><strong>HSE</strong></td>
+<td>High-Speed External</td>
+<td>4–26 MHz (25 MHz on BlackPill)</td>
+<td>External quartz crystal. High accuracy, required for stable USB and precision timing.</td>
+</tr>
+<tr>
+<td><strong>PLL</strong></td>
+<td>Phase-Locked Loop</td>
+<td>Up to 84 MHz</td>
+<td>Multiplies and divides HSI or HSE to generate higher system frequencies.</td>
+</tr>
+<tr>
+<td><strong>LSI / LSE</strong></td>
+<td>Low-Speed Internal / External</td>
+<td>32 kHz</td>
+<td>Dedicated for the Independent Watchdog (IWDG) and Real-Time Clock (RTC).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bus-architecture-peripheral-mapping">Bus Architecture &amp; Peripheral Mapping<a class="headerlink" href="#bus-architecture-peripheral-mapping" title="Permanent link">&para;</a></h2>
+<p>Peripherals are organized onto distinct internal buses according to their required bandwidth and clock speed:</p>
+<pre><code>  Bus      Max Speed   Peripherals Connected
+ ──────   ─────────── ─────────────────────────────────────────────────────────
+  AHB1      84 MHz     GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOH, RCC, DMA1, DMA2
+  AHB2      84 MHz     USB OTG FS
+  APB1      42 MHz     TIM2, TIM3, TIM4, TIM5, USART2, I2C1, I2C2, I2C3, SPI2, SPI3, WWDG, PWR
+  APB2      84 MHz     TIM1, TIM9, TIM10, TIM11, USART1, USART6, SPI1, SPI4, ADC1, SYSCFG, EXTI
+</code></pre>
+<div class="admonition important">
+<p class="admonition-title">Bus Gating Rule</p>
+<p>To configure a peripheral, identify which bus it resides on, then set the corresponding enable bit in that bus's clock register (e.g., <code>RCC-&gt;AHB1ENR</code> for GPIO, <code>RCC-&gt;APB1ENR</code> for I2C, <code>RCC-&gt;APB2ENR</code> for USART1).</p>
+</div>
+<hr />
+<h2 id="key-rcc-registers">Key RCC Registers<a class="headerlink" href="#key-rcc-registers" title="Permanent link">&para;</a></h2>
+<h3 id="1-rcc_cr-clock-control-register">1. <code>RCC_CR</code> — Clock Control Register<a class="headerlink" href="#1-rcc_cr-clock-control-register" title="Permanent link">&para;</a></h3>
+<p>Controls oscillators and monitors their stability flags:</p>
+<table>
+<thead>
+<tr>
+<th>Bit(s)</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td><code>HSION</code></td>
+<td>Turn on HSI oscillator (1 = ON)</td>
+</tr>
+<tr>
+<td>1</td>
+<td><code>HSIRDY</code></td>
+<td>HSI ready flag (1 = Stable)</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>HSEON</code></td>
+<td>Turn on HSE oscillator (1 = ON)</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>HSERDY</code></td>
+<td>HSE ready flag (1 = Stable)</td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>PLLON</code></td>
+<td>Turn on Main PLL (1 = ON)</td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>PLLRDY</code></td>
+<td>Main PLL ready flag (1 = Locked and stable)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-rcc_pllcfgr-pll-configuration-register">2. <code>RCC_PLLCFGR</code> — PLL Configuration Register<a class="headerlink" href="#2-rcc_pllcfgr-pll-configuration-register" title="Permanent link">&para;</a></h3>
+<p>Formulates the PLL output clock using four dividers/multipliers:</p>
+<p>$$\text{VCO Input} = \frac{f_{\text{IN}}}{M}, \quad f_{\text{VCO}} = \text{VCO Input} \times N, \quad f_{\text{PLL_OUT}} = \frac{f_{\text{VCO}}}{P}$$</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Name</th>
+<th>Bits</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLLSRC</code></td>
+<td>Source Select</td>
+<td>22</td>
+<td><code>0</code> = HSI, <code>1</code> = HSE</td>
+</tr>
+<tr>
+<td><code>PLLM</code></td>
+<td>Division Factor M</td>
+<td>5:0</td>
+<td>Divides input clock to 1–2 MHz (recommended 1 MHz)</td>
+</tr>
+<tr>
+<td><code>PLLN</code></td>
+<td>Multiplication Factor N</td>
+<td>14:6</td>
+<td>Multiplies VCO frequency ($192 \le N \le 432$)</td>
+</tr>
+<tr>
+<td><code>PLLP</code></td>
+<td>Main System Division P</td>
+<td>17:16</td>
+<td>Divides VCO to system clock (<code>00</code>=/2, <code>01</code>=/4, <code>10</code>=/6, <code>11</code>=/8)</td>
+</tr>
+<tr>
+<td><code>PLLQ</code></td>
+<td>USB OTG FS Division Q</td>
+<td>27:24</td>
+<td>Divides VCO to 48 MHz for USB operations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-rcc_cfgr-clock-configuration-register">3. <code>RCC_CFGR</code> — Clock Configuration Register<a class="headerlink" href="#3-rcc_cfgr-clock-configuration-register" title="Permanent link">&para;</a></h3>
+<p>Selects which clock drives <code>SYSCLK</code> and configures bus prescalers:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Name</th>
+<th>Bits</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SW[1:0]</code></td>
+<td>System Clock Switch</td>
+<td>1:0</td>
+<td><code>00</code> = HSI, <code>01</code> = HSE, <code>10</code> = PLL</td>
+</tr>
+<tr>
+<td><code>SWS[1:0]</code></td>
+<td>Switch Status (Read-Only)</td>
+<td>3:2</td>
+<td>Indicates active system clock (<code>00</code> = HSI, <code>01</code> = HSE, <code>10</code> = PLL)</td>
+</tr>
+<tr>
+<td><code>HPRE[3:0]</code></td>
+<td>AHB Prescaler</td>
+<td>7:4</td>
+<td><code>0xxx</code> = Not divided, <code>1000</code> = /2, <code>1001</code> = /4, etc.</td>
+</tr>
+<tr>
+<td><code>PPRE1[2:0]</code></td>
+<td>APB1 Prescaler</td>
+<td>12:10</td>
+<td><code>0xx</code> = Not divided, <code>100</code> = /2 (APB1 max is 42 MHz!)</td>
+</tr>
+<tr>
+<td><code>PPRE2[2:0]</code></td>
+<td>APB2 Prescaler</td>
+<td>15:13</td>
+<td><code>0xx</code> = Not divided, <code>100</code> = /2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-rcc_ahb1enr-ahb1-peripheral-clock-enable">4. <code>RCC_AHB1ENR</code> — AHB1 Peripheral Clock Enable<a class="headerlink" href="#4-rcc_ahb1enr-ahb1-peripheral-clock-enable" title="Permanent link">&para;</a></h3>
+<p>Enables peripheral clocks on AHB1:</p>
+<pre><code> 31                          7    6    5    4    3    2    1    0
+┌──────────────────────────┬────┬────┬────┬────┬────┬────┬────┬────┐
+│         Reserved         │GPIOH│Res.│Res.│GPIOE│GPIOD│GPIOC│GPIOB│GPIOA│
+└──────────────────────────┴────┴────┴────┴────┴────┴────┴────┴────┘
+</code></pre>
+<hr />
+<h2 id="driver-implementation-walkthrough">Driver Implementation Walkthrough<a class="headerlink" href="#driver-implementation-walkthrough" title="Permanent link">&para;</a></h2>
+<h3 id="1-initializing-system-clock-systemclockinit">1. Initializing System Clock (<code>SystemClockInit</code>)<a class="headerlink" href="#1-initializing-system-clock-systemclockinit" title="Permanent link">&para;</a></h3>
+<p>This function transitions the CPU from the default internal 16 MHz HSI to an external 25 MHz crystal stabilized and multiplied by the PLL to target higher operational frequencies.</p>
+<pre><code class="language-c">void SystemClockInit(void) {
+    // 1. Turn on External High-Speed Oscillator (HSE)
+    RCC-&gt;CR |= RCC_CR_HSEON;
+    while (!(RCC-&gt;CR &amp; RCC_CR_HSERDY)); // Wait until HSE is stable
+
+    // 2. Configure PLL factors (Source = HSE, M = 25, N = 192, P = 4)
+    RCC-&gt;PLLCFGR &amp;= ~(RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN
+                    | RCC_PLLCFGR_PLLP   | RCC_PLLCFGR_PLLQ);
+
+    RCC-&gt;PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSE
+                 | (25u  &lt;&lt; RCC_PLLCFGR_PLLM_Pos)
+                 | (192u &lt;&lt; RCC_PLLCFGR_PLLN_Pos)
+                 | (3u   &lt;&lt; RCC_PLLCFGR_PLLP_Pos);
+
+    // 3. Set Bus Prescalers (AHB = /1, APB1 = /1, APB2 = /1)
+    RCC-&gt;CFGR &amp;= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
+    RCC-&gt;CFGR |= RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV1 | RCC_CFGR_PPRE2_DIV1;
+
+    // 4. Turn on the PLL and wait for lock
+    RCC-&gt;CR |= RCC_CR_PLLON;
+    while (!(RCC-&gt;CR &amp; RCC_CR_PLLRDY));
+
+    // 5. Switch System Clock (SYSCLK) to PLL output
+    RCC-&gt;CFGR &amp;= ~RCC_CFGR_SW;
+    RCC-&gt;CFGR |= RCC_CFGR_SW_PLL;
+
+    // 6. Wait until hardware confirms PLL is the active system clock source
+    while ((RCC-&gt;CFGR &amp; RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+}
+</code></pre>
+<h4 id="why-are-wait-loops-while-necessary">Why are wait loops (<code>while</code>) necessary?<a class="headerlink" href="#why-are-wait-loops-while-necessary" title="Permanent link">&para;</a></h4>
+<p>Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via <code>HSERDY</code> and <code>PLLRDY</code>.</p>
+<hr />
+<h3 id="2-enabling-gpio-port-clocks-rcc_gpioclockenable">2. Enabling GPIO Port Clocks (<code>RCC_GPIOClockEnable</code>)<a class="headerlink" href="#2-enabling-gpio-port-clocks-rcc_gpioclockenable" title="Permanent link">&para;</a></h3>
+<p>Because GPIO ports are independent blocks on AHB1, we dynamically enable the port clock by matching the port pointer:</p>
+<pre><code class="language-c">void RCC_GPIOClockEnable(GPIO_TypeDef *port) {
+    if (port == GPIOA)
+        RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+    else if (port == GPIOB)
+        RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+    else if (port == GPIOC)
+        RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+    else if (port == GPIOD)
+        RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+    else if (port == GPIOE)
+        RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
+    else if (port == GPIOH)
+        RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
+}
+</code></pre>
+<div class="admonition tip">
+<p class="admonition-title">Hardware Delay After Clock Enable</p>
+<p>According to the STM32 Cortex-M4 programming guidelines, after setting a bit in an enable register (such as <code>AHB1ENR</code>), a delay of at least two peripheral bus cycles is required before accessing the peripheral's registers. In practice, performing a dummy read guarantees the bus has synchronized:
+<code>c
+RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+volatile uint32_t dummy = RCC-&gt;AHB1ENR; // Ensures clock is active before register writes</code></p>
+</div>
+<hr />
+<h3 id="3-generic-clock-enable-helper-rcc_clockenable">3. Generic Clock Enable Helper (<code>RCC_ClockEnable</code>)<a class="headerlink" href="#3-generic-clock-enable-helper-rcc_clockenable" title="Permanent link">&para;</a></h3>
+<p>For arbitrary peripherals across various buses, a generic pointer-mask helper enables straightforward configuration:</p>
+<pre><code class="language-c">void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask) {
+    *enr |= mask;
+}
+</code></pre>
+<hr />
+<h2 id="key-takeaways">Key Takeaways<a class="headerlink" href="#key-takeaways" title="Permanent link">&para;</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Key Takeaways</p>
+<ol>
+<li><strong>Clock Gating by Default</strong>: All peripheral hardware starts in a powered-off state. You must explicitly set the corresponding bit in <code>RCC_AHBxENR</code> or <code>RCC_APBxENR</code>.</li>
+<li><strong>Wait for Ready Flags</strong>: Never switch clock sources without verifying the respective <code>*RDY</code> flag in <code>RCC_CR</code>.</li>
+<li><strong>Respect Bus Limits</strong>: APB1 maximum frequency is <strong>42 MHz</strong>, whereas AHB and APB2 can reach <strong>84 MHz</strong>.</li>
+<li><strong>Bus Synchronization</strong>: Allow a small delay or execute a dummy read on the enable register before modifying peripheral registers.</li>
+</ol>
+</div>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/Demon-Lord-10/Bare-Metal" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
