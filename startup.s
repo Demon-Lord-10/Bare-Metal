@@ -1,4 +1,5 @@
 .cpu cortex-m4
+.syntax unified
 .thumb
 
 .global reset_handler
@@ -43,9 +44,9 @@ bss_loop:
 
 bss_done:
     bl main
-    b.
+    b .
 
 .weak systick_handler
 .type systick_handler, %function
 systick_handler:
-    b.
+    b .

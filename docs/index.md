@@ -42,6 +42,8 @@ This project takes the third approach: we write our own **linker script**, **sta
 |---|---|---|
 | 1 | [Memory Layout & Linker Script](01_memory_and_linker/linker_script.md) | How the linker maps `.text`, `.data`, `.bss` into Flash and RAM. LMA vs VMA. The `MEMORY` and `SECTIONS` commands. |
 | 2 | [Startup Code & Boot Sequence](02_startup_and_boot/startup_assembly.md) | What happens at power-on: vector table, `reset_handler`, copying `.data`, zeroing `.bss`, and jumping to `main()`. |
+| 3 | [Reset and Clock Control (RCC)](03_rcc/rcc.md) | The STM32 clock tree, PLL configuration, bus architecture (AHB vs APB), and peripheral clock gating. |
+| 4 | [General Purpose Input/Output (GPIO)](04_gpio/gpio.md) | Digital I/O architecture, pin modes, atomic manipulation with BSRR, and active-high vs active-low circuits. |
 
 ---
 

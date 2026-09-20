@@ -2,6 +2,8 @@
 
 void GPIO_Init(GPIO_TypeDef *port, const GPIO_Config *cfg){
 
+    RCC_GPIOClockEnable(port);
+
     port->MODER  &= ~(0x3<< cfg->pin*2);
     port->MODER  |=  (cfg->mode << cfg->pin*2);
 
@@ -52,13 +54,13 @@ void RCC_GPIOClockEnable(GPIO_TypeDef *port){
     if(port == GPIOA)
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     else if(port == GPIOB)
-        RCC->APB1ENR |= RCC_AHB1ENR_GPIOBEN;
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
     else if(port == GPIOC)
-        RCC->APB1ENR |= RCC_AHB1ENR_GPIOCEN;
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     else if(port == GPIOD)
-        RCC->APB1ENR |= RCC_AHB1ENR_GPIODEN;
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
     else if(port == GPIOE)
-        RCC->APB1ENR |= RCC_AHB1ENR_GPIOEEN;
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
     else if(port == GPIOH)
-        RCC->APB1ENR |= RCC_AHB1ENR_GPIOHEN;
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
 }
