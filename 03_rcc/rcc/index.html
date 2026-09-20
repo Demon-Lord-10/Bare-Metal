@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Demon-Lord-10" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Reset and Clock Control (RCC) - STM32F401 Bare-Metal Firmware Notes</title>
+    <title>Clocks & Bus Architecture - STM32F401 Bare-Metal Firmware Notes</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Reset and Clock Control (RCC)";
+        var mkdocs_page_name = "Clocks \u0026 Bus Architecture";
         var mkdocs_page_input_path = "03_rcc/rcc.md";
         var mkdocs_page_url = null;
       </script>
@@ -57,6 +57,56 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">Reset Handler & Boot</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">RCC</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Clocks & Bus Architecture</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#the-stm32f401-clock-tree">The STM32F401 Clock Tree</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#clock-sources">Clock Sources</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bus-architecture-peripheral-mapping">Bus Architecture &amp; Peripheral Mapping</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#key-rcc-registers">Key RCC Registers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-rcc_cr-clock-control-register">1. RCC_CR — Clock Control Register</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-rcc_pllcfgr-pll-configuration-register">2. RCC_PLLCFGR — PLL Configuration Register</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-rcc_cfgr-clock-configuration-register">3. RCC_CFGR — Clock Configuration Register</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-rcc_ahb1enr-ahb1-peripheral-clock-enable">4. RCC_AHB1ENR — AHB1 Peripheral Clock Enable</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#driver-implementation-walkthrough">Driver Implementation Walkthrough</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-initializing-system-clock-systemclockinit">1. Initializing System Clock (SystemClockInit)</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#why-are-wait-loops-while-necessary">Why are wait loops (while) necessary?</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-enabling-gpio-port-clocks-rcc_gpioclockenable">2. Enabling GPIO Port Clocks (RCC_GPIOClockEnable)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-generic-clock-enable-helper-rcc_clockenable">3. Generic Clock Enable Helper (RCC_ClockEnable)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#key-takeaways">Key Takeaways</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GPIO</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../04_gpio/gpio/">Digital I/O & Registers</a>
+                  </li>
+              </ul>
       </div>
     </div>
     </nav>
@@ -71,7 +121,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Reset and Clock Control (RCC)</li>
+          <li class="breadcrumb-item">RCC</li>
+      <li class="breadcrumb-item active">Clocks & Bus Architecture</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/Demon-Lord-10/Bare-Metal/edit/master/docs/03_rcc/rcc.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -391,6 +442,10 @@ volatile uint32_t dummy = RCC-&gt;AHB1ENR; // Ensures clock is active before reg
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../02_startup_and_boot/startup_assembly/" class="btn btn-neutral float-left" title="Reset Handler & Boot"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../04_gpio/gpio/" class="btn btn-neutral float-right" title="Digital I/O & Registers">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
 
   <hr/>
 
@@ -416,6 +471,10 @@ volatile uint32_t dummy = RCC-&gt;AHB1ENR; // Ensures clock is active before reg
         </span>
     
     
+      <span><a href="../../02_startup_and_boot/startup_assembly/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../04_gpio/gpio/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

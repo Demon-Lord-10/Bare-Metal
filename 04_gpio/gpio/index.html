@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Demon-Lord-10" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>General Purpose Input/Output (GPIO) - STM32F401 Bare-Metal Firmware Notes</title>
+    <title>Digital I/O & Registers - STM32F401 Bare-Metal Firmware Notes</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "General Purpose Input/Output (GPIO)";
+        var mkdocs_page_name = "Digital I/O \u0026 Registers";
         var mkdocs_page_input_path = "04_gpio/gpio.md";
         var mkdocs_page_url = null;
       </script>
@@ -57,6 +57,66 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">Reset Handler & Boot</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">RCC</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../03_rcc/rcc/">Clocks & Bus Architecture</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GPIO</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Digital I/O & Registers</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gpio-internal-architecture">GPIO Internal Architecture</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gpio-hardware-registers">GPIO Hardware Registers</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuration-modes-explained">Configuration Modes Explained</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-pin-mode-moder">1. Pin Mode (MODER)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-output-type-push-pull-vs-open-drain-otyper">2. Output Type: Push-Pull vs. Open-Drain (OTYPER)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-pull-up-pull-down-resistors-pupdr">3. Pull-Up / Pull-Down Resistors (PUPDR)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-bit-setreset-register-bsrr">4. Bit Set/Reset Register (BSRR)</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#why-use-bsrr-instead-of-odr">Why use BSRR instead of ODR?</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#driver-implementation-walkthrough">Driver Implementation Walkthrough</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-initializing-a-pin-gpio_init">1. Initializing a Pin (GPIO_Init)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-writing-to-a-pin-gpio_writepin">2. Writing to a Pin (GPIO_WritePin)</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#what-actually-happens-when-you-call-gpio_writepin">What actually happens when you call GPIO_WritePin?</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#hardware-spotlight-active-high-vs-active-low-circuits">💡 Hardware Spotlight: Active-High vs. Active-Low Circuits</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#case-a-active-high-circuit-standard">Case A: Active-High Circuit (Standard)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#case-b-active-low-circuit-eg-stm32-blackpill-onboard-led-on-pc13">Case B: Active-Low Circuit (e.g., STM32 BlackPill onboard LED on PC13)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-reading-a-pin-gpio_readpin">3. Reading a Pin (GPIO_ReadPin)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4-toggling-a-pin-gpio_togglepin">4. Toggling a Pin (GPIO_TogglePin)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#key-takeaways">Key Takeaways</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
       </div>
     </div>
     </nav>
@@ -71,7 +131,8 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">General Purpose Input/Output (GPIO)</li>
+          <li class="breadcrumb-item">GPIO</li>
+      <li class="breadcrumb-item active">Digital I/O & Registers</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/Demon-Lord-10/Bare-Metal/edit/master/docs/04_gpio/gpio.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -378,6 +439,9 @@
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../03_rcc/rcc/" class="btn btn-neutral float-left" title="Clocks & Bus Architecture"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
 
   <hr/>
 
@@ -402,6 +466,8 @@
           <a href="https://github.com/Demon-Lord-10/Bare-Metal" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
         </span>
     
+    
+      <span><a href="../../03_rcc/rcc/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
   </span>
