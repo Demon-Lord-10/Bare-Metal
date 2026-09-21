@@ -128,6 +128,7 @@
 <h2 id="1-overview">1. Overview<a class="headerlink" href="#1-overview" title="Permanent link">&para;</a></h2>
 <p>The <strong>Reset and Clock Control (RCC)</strong> peripheral is the heartbeat of the STM32 microcontroller. On modern ARM Cortex-M microcontrollers, power efficiency is a primary architectural goal. Consequently, <strong>every peripheral is clock-gated (powered off) by default</strong>.</p>
 <p>Before you can read or write to any peripheral register — whether it is a GPIO port, a timer, an ADC, or a UART controller — you must first enable its clock through the RCC. Attempting to access a peripheral's registers while its clock is disabled results in either silent failure (writes are ignored) or a <strong>BusFault / HardFault</strong>.</p>
+<p>In our example we will set the system clock(HCLK) to be 24MHz.</p>
 <hr />
 <h2 id="2-the-stm32f401-clock-tree">2. The STM32F401 Clock Tree<a class="headerlink" href="#2-the-stm32f401-clock-tree" title="Permanent link">&para;</a></h2>
 <p>The STM32F401CCU6 can operate at clock frequencies up to <strong>84 MHz</strong>. To achieve this, it features several internal and external clock sources routed through a Phase-Locked Loop (PLL).</p>
@@ -274,6 +275,7 @@
 </tr>
 </tbody>
 </table>
+<p>In our case we have PLLSRC is HSE and the frequeny is 25MHz and PLLM=25 PLLN=192 and PLLP=8 which gives the PLL frequency to be 24MHz.</p>
 <h3 id="43-rcc_cfgr-clock-configuration-register">4.3 <code>RCC_CFGR</code> — Clock Configuration Register<a class="headerlink" href="#43-rcc_cfgr-clock-configuration-register" title="Permanent link">&para;</a></h3>
 <p><img alt="rcc3" src="../RCC_CFGR.png" /></p>
 <p>Selects which clock drives <code>SYSCLK</code> and configures bus prescalers:</p>
@@ -330,7 +332,7 @@
     RCC-&gt;CR |= RCC_CR_HSEON;
     while (!(RCC-&gt;CR &amp; RCC_CR_HSERDY)); // Wait until HSE is stable
 
-    // 2. Configure PLL factors (Source = HSE, M = 25, N = 192, P = 4)
+    // 2. Configure PLL factors (Source = HSE, M = 25, N = 192, P = 8)
     RCC-&gt;PLLCFGR &amp;= ~(RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN
                     | RCC_PLLCFGR_PLLP   | RCC_PLLCFGR_PLLQ);
 
