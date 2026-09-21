@@ -334,8 +334,8 @@
   │  .text       │                   │              │
   │  .rodata     │                   │              │
   ├──────────────┤                   ├──────────────┤
-  │  .data (LMA) │ ──── copy ────▶  │  .data (VMA) │
-  │  _sidata     │    at boot        │  _sdata      │
+  │  .data (LMA) │ ────────────────▶│  .data (VMA) │
+  │  _sidata     │    copy at boot   │  _sdata      │
   │              │                   │  _edata      │
   └──────────────┘                   ├──────────────┤
                                      │  .bss        │
