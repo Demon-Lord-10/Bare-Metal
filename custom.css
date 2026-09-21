@@ -1,3 +1,14 @@
+/* Shrink the sidebar */
+.wy-nav-side {
+    width: 230px !important;
+}
+.wy-side-scroll {
+    width: 230px !important;
+}
+.wy-nav-content-wrap {
+    margin-left: 230px !important;
+}
+
 /* Better content width — not too narrow (old 800px), not too wide (none) */
 .wy-nav-content {
     max-width: 1100px !important;
