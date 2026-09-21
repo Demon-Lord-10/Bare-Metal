@@ -1,17 +1,29 @@
-/* Shrink the sidebar */
+/* Sidebar — slightly tighter than default 300px but not clipping */
 .wy-nav-side {
-    width: 230px !important;
+    width: 270px !important;
 }
 .wy-side-scroll {
-    width: 230px !important;
+    width: 270px !important;
 }
 .wy-nav-content-wrap {
-    margin-left: 230px !important;
+    margin-left: 270px !important;
 }
 
-/* Better content width — not too narrow (old 800px), not too wide (none) */
+/* Prevent nav item text from being clipped — let it wrap cleanly */
+.wy-menu-vertical a {
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+/* Sidebar title — allow wrapping */
+.wy-side-nav-search a {
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+/* Better content width */
 .wy-nav-content {
-    max-width: 1600px !important;
+    max-width: 1100px !important;
 }
 
 /* Fix ASCII art: consistent monospace font + no wrapping */
