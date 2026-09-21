@@ -1,27 +1,4 @@
-/* Sidebar — slightly tighter than default 300px but not clipping */
-.wy-nav-side {
-    width: 270px !important;
-}
-.wy-side-scroll {
-    width: 270px !important;
-}
-.wy-nav-content-wrap {
-    margin-left: 270px !important;
-}
-
-/* Prevent nav item text from being clipped — let it wrap cleanly */
-.wy-menu-vertical a {
-    white-space: normal !important;
-    word-break: break-word;
-}
-
-/* Sidebar title — allow wrapping */
-.wy-side-nav-search a {
-    white-space: normal !important;
-    word-break: break-word;
-}
-
-/* Better content width */
+/* Extend content area — removes the large right gap */
 .wy-nav-content {
     max-width: 1100px !important;
 }
@@ -35,7 +12,7 @@ pre, pre code {
     overflow-x: auto;
 }
 
-/* Inline code — keep it tight */
+/* Inline code */
 code {
     font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace !important;
     font-size: 0.85em !important;
