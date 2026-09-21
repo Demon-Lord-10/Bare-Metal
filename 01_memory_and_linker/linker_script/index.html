@@ -328,25 +328,25 @@
 </tr>
 </tbody>
 </table>
-<pre><code>  Flash (ROM)                          RAM
-  ┌──────────────┐                   ┌──────────────┐
-  │  .vectors    │                   │              │
-  │  .text       │                   │              │
-  │  .rodata     │                   │              │
-  ├──────────────┤                   ├──────────────┤
-  │  .data (LMA) │ ────────────────▶ │  .data (VMA) │
-  │  _sidata     │    copy at boot   │  _sdata      │
-  │              │                   │  _edata      │
-  └──────────────┘                   ├──────────────┤
-                                     │  .bss        │
-                                     │  _sbss       │
-                                     │  _ebss       │
-                                     ├──────────────┤
-                                     │     ▲        │
-                                     │   stack      │
-                                     │              │
-                                     │  _estack     │
-                                     └──────────────┘
+<pre><code>  Flash (ROM)                                RAM
+  ┌──────────────┐                     ┌──────────────┐
+  │  .vectors    │                     │              │
+  │  .text       │                     │              │
+  │  .rodata     │                     │              │
+  ├──────────────┤                     ├──────────────┤
+  │  .data (LMA) │ ──────────────────▶ │  .data (VMA) │
+  │  _sidata     │    copy at boot     │  _sdata      │
+  │              │                     │  _edata      │
+  └──────────────┘                     ├──────────────┤
+                                       │  .bss        │
+                                       │  _sbss       │
+                                       │  _ebss       │
+                                       ├──────────────┤
+                                       │     ▲        │
+                                       │   stack      │
+                                       │              │
+                                       │  _estack     │
+                                       └──────────────┘
 </code></pre>
 <h3 id="45-bss-zero-initialized-variables">4.5 <code>.bss</code> — Zero-Initialized Variables<a class="headerlink" href="#45-bss-zero-initialized-variables" title="Permanent link">&para;</a></h3>
 <pre><code class="language-ld">.bss : {
