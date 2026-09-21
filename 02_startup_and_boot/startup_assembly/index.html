@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Demon-Lord-10" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Reset Handler & Boot - STM32F401 Bare-Metal Firmware Notes</title>
+    <title>2. Startup Code & Boot Sequence - STM32F401 Bare-Metal Firmware Notes</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Reset Handler \u0026 Boot";
+        var mkdocs_page_name = "2. Startup Code \u0026 Boot Sequence";
         var mkdocs_page_input_path = "02_startup_and_boot/startup_assembly.md";
         var mkdocs_page_url = null;
       </script>
@@ -47,57 +47,53 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Linker Script</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">Memory Layout & Sections</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">1. Memory Layout & Linker Script</a>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">Startup Code</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Reset Handler & Boot</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">2. Startup Code & Boot Sequence</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    <li class="toctree-l2"><a class="reference internal" href="#1-overview">1. Overview</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#the-boot-sequence">The Boot Sequence</a>
+    <li class="toctree-l2"><a class="reference internal" href="#2-the-boot-sequence">2. The Boot Sequence</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#the-complete-startup-code">The Complete Startup Code</a>
+    <li class="toctree-l2"><a class="reference internal" href="#3-assembler-directives">3. Assembler Directives</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#processor-instruction-set-directives">Processor &amp; Instruction Set Directives</a>
+    <li class="toctree-l3"><a class="reference internal" href="#31-processor-instruction-set">3.1 Processor &amp; Instruction Set</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#global-and-external-symbols">Global and External Symbols</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#vector-table">Vector Table</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#the-reset-handler">The Reset Handler</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#step-1-copy-data-from-flash-to-ram">Step 1: Copy .data from Flash to RAM</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#step-2-zero-the-bss-section">Step 2: Zero the .bss Section</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#step-3-call-main-and-hang">Step 3: Call main() and Hang</a>
+    <li class="toctree-l3"><a class="reference internal" href="#32-global-and-external-symbols">3.2 Global and External Symbols</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#default-systick-handler">Default SysTick Handler</a>
+    <li class="toctree-l2"><a class="reference internal" href="#4-vector-table">4. Vector Table</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-the-reset-handler">5. The Reset Handler</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#51-copy-data-from-flash-to-ram">5.1 Copy .data from Flash to RAM</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#52-zero-the-bss-section">5.2 Zero the .bss Section</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#53-call-main-and-hang">5.3 Call main() and Hang</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#how-linker-startup-work-together">How Linker &amp; Startup Work Together</a>
+    <li class="toctree-l2"><a class="reference internal" href="#6-default-systick-handler">6. Default SysTick Handler</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#key-takeaways">Key Takeaways</a>
+    <li class="toctree-l2"><a class="reference internal" href="#7-how-linker-startup-work-together">7. How Linker &amp; Startup Work Together</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#8-key-takeaways">8. Key Takeaways</a>
     </li>
     </ul>
-                  </li>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">RCC</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../03_rcc/rcc/">Clocks & Bus Architecture</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../03_rcc/rcc/">3. Reset & Clock Control (RCC)</a>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">GPIO</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../04_gpio/gpio/">Digital I/O & Registers</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../04_gpio/gpio/">4. General Purpose I/O (GPIO)</a>
+                </li>
               </ul>
       </div>
     </div>
@@ -113,8 +109,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">Startup Code</li>
-      <li class="breadcrumb-item active">Reset Handler & Boot</li>
+      <li class="breadcrumb-item active">2. Startup Code & Boot Sequence</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/Demon-Lord-10/Bare-Metal/edit/master/docs/02_startup_and_boot/startup_assembly.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -125,11 +120,11 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="startup-code-boot-sequence">Startup Code &amp; Boot Sequence<a class="headerlink" href="#startup-code-boot-sequence" title="Permanent link">&para;</a></h1>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<h2 id="1-overview">1. Overview<a class="headerlink" href="#1-overview" title="Permanent link">&para;</a></h2>
 <p>On a desktop PC, the operating system sets up your program's stack, loads globals into memory, and calls <code>main()</code>. On a bare-metal Cortex-M4, <strong>there is no OS</strong> — a small piece of hand-written assembly must do all of this before your C code can run.</p>
 <p>This page walks through <code>startup.s</code> line by line and explains exactly what happens between the moment power is applied and the moment <code>main()</code> executes.</p>
 <hr />
-<h2 id="the-boot-sequence">The Boot Sequence<a class="headerlink" href="#the-boot-sequence" title="Permanent link">&para;</a></h2>
+<h2 id="2-the-boot-sequence">2. The Boot Sequence<a class="headerlink" href="#2-the-boot-sequence" title="Permanent link">&para;</a></h2>
 <p>When the STM32F401 powers on (or resets), the Cortex-M4 core performs a fixed hardware sequence:</p>
 <pre><code>     Power On / Reset
            │
@@ -170,9 +165,8 @@
 <p>This is fundamentally different from ARM-A series (e.g., Raspberry Pi) where the core starts in ARM mode and jumps to a fixed address. Cortex-M uses a <strong>vector table fetch</strong> — the hardware reads a table of addresses, not instructions. The first entry isn't even code — it's the initial stack pointer value.</p>
 </div>
 <hr />
-<h2 id="the-complete-startup-code">The Complete Startup Code<a class="headerlink" href="#the-complete-startup-code" title="Permanent link">&para;</a></h2>
-<p>Here is the full <code>startup.s</code> with every line explained.</p>
-<h3 id="processor-instruction-set-directives">Processor &amp; Instruction Set Directives<a class="headerlink" href="#processor-instruction-set-directives" title="Permanent link">&para;</a></h3>
+<h2 id="3-assembler-directives">3. Assembler Directives<a class="headerlink" href="#3-assembler-directives" title="Permanent link">&para;</a></h2>
+<h3 id="31-processor-instruction-set">3.1 Processor &amp; Instruction Set<a class="headerlink" href="#31-processor-instruction-set" title="Permanent link">&para;</a></h3>
 <pre><code class="language-asm">.cpu cortex-m4
 .thumb
 </code></pre>
@@ -194,8 +188,7 @@
 </tr>
 </tbody>
 </table>
-<hr />
-<h3 id="global-and-external-symbols">Global and External Symbols<a class="headerlink" href="#global-and-external-symbols" title="Permanent link">&para;</a></h3>
+<h3 id="32-global-and-external-symbols">3.2 Global and External Symbols<a class="headerlink" href="#32-global-and-external-symbols" title="Permanent link">&para;</a></h3>
 <pre><code class="language-asm">.global reset_handler
 .global systick_handler
 .extern main
@@ -223,7 +216,7 @@
 </tbody>
 </table>
 <hr />
-<h3 id="vector-table">Vector Table<a class="headerlink" href="#vector-table" title="Permanent link">&para;</a></h3>
+<h2 id="4-vector-table">4. Vector Table<a class="headerlink" href="#4-vector-table" title="Permanent link">&para;</a></h2>
 <pre><code class="language-asm">.section .vectors, &quot;a&quot;, %progbits
 vector_table:
     .word _estack
@@ -345,9 +338,9 @@ vector_table:
 <p>The unused vector entries (NMI, HardFault, etc.) are zero. If a HardFault occurs, the core will jump to address <code>0x0</code> — which may silently restart the firmware or lock up. In production, you'd want fault handlers that at least enter an infinite loop or log a diagnostic.</p>
 </div>
 <hr />
-<h3 id="the-reset-handler">The Reset Handler<a class="headerlink" href="#the-reset-handler" title="Permanent link">&para;</a></h3>
+<h2 id="5-the-reset-handler">5. The Reset Handler<a class="headerlink" href="#5-the-reset-handler" title="Permanent link">&para;</a></h2>
 <p>This is the code that runs <strong>first</strong> after every reset. Its job is to set up the C runtime environment.</p>
-<h4 id="step-1-copy-data-from-flash-to-ram">Step 1: Copy <code>.data</code> from Flash to RAM<a class="headerlink" href="#step-1-copy-data-from-flash-to-ram" title="Permanent link">&para;</a></h4>
+<h3 id="51-copy-data-from-flash-to-ram">5.1 Copy <code>.data</code> from Flash to RAM<a class="headerlink" href="#51-copy-data-from-flash-to-ram" title="Permanent link">&para;</a></h3>
 <pre><code class="language-asm">.section .text
 .align 1
 
@@ -399,8 +392,7 @@ data_loop:
 </tbody>
 </table>
 <p><strong>The <code>[r2], #4</code> syntax</strong>: This is ARM <strong>post-indexed</strong> addressing. It means: load from the address in <code>r2</code>, <em>then</em> add 4 to <code>r2</code>. This is equivalent to <code>*src++</code> in C.</p>
-<hr />
-<h4 id="step-2-zero-the-bss-section">Step 2: Zero the <code>.bss</code> Section<a class="headerlink" href="#step-2-zero-the-bss-section" title="Permanent link">&para;</a></h4>
+<h3 id="52-zero-the-bss-section">5.2 Zero the <code>.bss</code> Section<a class="headerlink" href="#52-zero-the-bss-section" title="Permanent link">&para;</a></h3>
 <pre><code class="language-asm">data_done:
     /* Zero BSS */
     ldr r0, =_sbss        @ r0 = BSS start (RAM)
@@ -414,8 +406,7 @@ bss_loop:
     b bss_loop             @ Repeat
 </code></pre>
 <p>The C standard guarantees that uninitialized global and static variables are zero. Since <code>.bss</code> takes up zero space in the Flash binary (to save space), we must explicitly fill that RAM region with zeros.</p>
-<hr />
-<h4 id="step-3-call-main-and-hang">Step 3: Call <code>main()</code> and Hang<a class="headerlink" href="#step-3-call-main-and-hang" title="Permanent link">&para;</a></h4>
+<h3 id="53-call-main-and-hang">5.3 Call <code>main()</code> and Hang<a class="headerlink" href="#53-call-main-and-hang" title="Permanent link">&para;</a></h3>
 <pre><code class="language-asm">bss_done:
     bl main               @ Branch-with-Link to main()
     b .                    @ Infinite loop (should never reach here)
@@ -429,7 +420,7 @@ bss_loop:
 </li>
 </ul>
 <hr />
-<h3 id="default-systick-handler">Default SysTick Handler<a class="headerlink" href="#default-systick-handler" title="Permanent link">&para;</a></h3>
+<h2 id="6-default-systick-handler">6. Default SysTick Handler<a class="headerlink" href="#6-default-systick-handler" title="Permanent link">&para;</a></h2>
 <pre><code class="language-asm">.weak systick_handler
 .type systick_handler, %function
 systick_handler:
@@ -454,7 +445,7 @@ systick_handler:
 </tbody>
 </table>
 <hr />
-<h2 id="how-linker-startup-work-together">How Linker &amp; Startup Work Together<a class="headerlink" href="#how-linker-startup-work-together" title="Permanent link">&para;</a></h2>
+<h2 id="7-how-linker-startup-work-together">7. How Linker &amp; Startup Work Together<a class="headerlink" href="#7-how-linker-startup-work-together" title="Permanent link">&para;</a></h2>
 <p>The linker script and startup assembly are tightly coupled through <strong>symbols</strong>. Here's the contract:</p>
 <pre><code>  Linker Script (linker.ld)              Startup Assembly (startup.s)
   ─────────────────────────              ──────────────────────────────
@@ -470,7 +461,7 @@ systick_handler:
 </code></pre>
 <p>If you rename a symbol in one file but not the other, the linker will fail with an <strong>"undefined reference"</strong> error. These two files are a matched pair.</p>
 <hr />
-<h2 id="key-takeaways">Key Takeaways<a class="headerlink" href="#key-takeaways" title="Permanent link">&para;</a></h2>
+<h2 id="8-key-takeaways">8. Key Takeaways<a class="headerlink" href="#8-key-takeaways" title="Permanent link">&para;</a></h2>
 <div class="admonition tip">
 <p class="admonition-title">Key Takeaways</p>
 <ol>
@@ -486,8 +477,8 @@ systick_handler:
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../01_memory_and_linker/linker_script/" class="btn btn-neutral float-left" title="Memory Layout & Sections"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../../03_rcc/rcc/" class="btn btn-neutral float-right" title="Clocks & Bus Architecture">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../01_memory_and_linker/linker_script/" class="btn btn-neutral float-left" title="1. Memory Layout & Linker Script"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../03_rcc/rcc/" class="btn btn-neutral float-right" title="3. Reset & Clock Control (RCC)">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>

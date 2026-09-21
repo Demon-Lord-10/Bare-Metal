@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Demon-Lord-10" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Digital I/O & Registers - STM32F401 Bare-Metal Firmware Notes</title>
+    <title>4. General Purpose I/O (GPIO) - STM32F401 Bare-Metal Firmware Notes</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Digital I/O \u0026 Registers";
+        var mkdocs_page_name = "4. General Purpose I/O (GPIO)";
         var mkdocs_page_input_path = "04_gpio/gpio.md";
         var mkdocs_page_url = null;
       </script>
@@ -47,75 +47,57 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Linker Script</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">Memory Layout & Sections</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">1. Memory Layout & Linker Script</a>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">Startup Code</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">Reset Handler & Boot</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">2. Startup Code & Boot Sequence</a>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">RCC</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../03_rcc/rcc/">Clocks & Bus Architecture</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../03_rcc/rcc/">3. Reset & Clock Control (RCC)</a>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">GPIO</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Digital I/O & Registers</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">4. General Purpose I/O (GPIO)</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    <li class="toctree-l2"><a class="reference internal" href="#1-overview">1. Overview</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#gpio-internal-architecture">GPIO Internal Architecture</a>
+    <li class="toctree-l2"><a class="reference internal" href="#2-internal-architecture">2. Internal Architecture</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#gpio-hardware-registers">GPIO Hardware Registers</a>
+    <li class="toctree-l2"><a class="reference internal" href="#3-hardware-registers">3. Hardware Registers</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#configuration-modes-explained">Configuration Modes Explained</a>
+    <li class="toctree-l2"><a class="reference internal" href="#4-configuration-modes">4. Configuration Modes</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#1-pin-mode-moder">1. Pin Mode (MODER)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#41-pin-mode-moder">4.1 Pin Mode (MODER)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#2-output-type-push-pull-vs-open-drain-otyper">2. Output Type: Push-Pull vs. Open-Drain (OTYPER)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#42-output-type-push-pull-vs-open-drain-otyper">4.2 Output Type: Push-Pull vs. Open-Drain (OTYPER)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#3-pull-up-pull-down-resistors-pupdr">3. Pull-Up / Pull-Down Resistors (PUPDR)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#43-pull-up-pull-down-resistors-pupdr">4.3 Pull-Up / Pull-Down Resistors (PUPDR)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#4-bit-setreset-register-bsrr">4. Bit Set/Reset Register (BSRR)</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#why-use-bsrr-instead-of-odr">Why use BSRR instead of ODR?</a>
+    <li class="toctree-l3"><a class="reference internal" href="#44-bit-setreset-register-bsrr">4.4 Bit Set/Reset Register (BSRR)</a>
     </li>
         </ul>
     </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#driver-implementation-walkthrough">Driver Implementation Walkthrough</a>
+    <li class="toctree-l2"><a class="reference internal" href="#5-driver-implementation">5. Driver Implementation</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#1-initializing-a-pin-gpio_init">1. Initializing a Pin (GPIO_Init)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#51-initializing-a-pin-gpio_init">5.1 Initializing a Pin (GPIO_Init)</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#2-writing-to-a-pin-gpio_writepin">2. Writing to a Pin (GPIO_WritePin)</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#what-actually-happens-when-you-call-gpio_writepin">What actually happens when you call GPIO_WritePin?</a>
+    <li class="toctree-l3"><a class="reference internal" href="#52-writing-to-a-pin-gpio_writepin">5.2 Writing to a Pin (GPIO_WritePin)</a>
     </li>
-        </ul>
+    <li class="toctree-l3"><a class="reference internal" href="#53-active-high-vs-active-low-circuits">5.3 Active-High vs. Active-Low Circuits</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#hardware-spotlight-active-high-vs-active-low-circuits">💡 Hardware Spotlight: Active-High vs. Active-Low Circuits</a>
-        <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#case-a-active-high-circuit-standard">Case A: Active-High Circuit (Standard)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#54-reading-a-pin-gpio_readpin">5.4 Reading a Pin (GPIO_ReadPin)</a>
     </li>
-    <li class="toctree-l4"><a class="reference internal" href="#case-b-active-low-circuit-eg-stm32-blackpill-onboard-led-on-pc13">Case B: Active-Low Circuit (e.g., STM32 BlackPill onboard LED on PC13)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#55-toggling-a-pin-gpio_togglepin">5.5 Toggling a Pin (GPIO_TogglePin)</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#3-reading-a-pin-gpio_readpin">3. Reading a Pin (GPIO_ReadPin)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#4-toggling-a-pin-gpio_togglepin">4. Toggling a Pin (GPIO_TogglePin)</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#key-takeaways">Key Takeaways</a>
+    <li class="toctree-l2"><a class="reference internal" href="#6-key-takeaways">6. Key Takeaways</a>
     </li>
     </ul>
-                  </li>
+                </li>
               </ul>
       </div>
     </div>
@@ -131,8 +113,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-          <li class="breadcrumb-item">GPIO</li>
-      <li class="breadcrumb-item active">Digital I/O & Registers</li>
+      <li class="breadcrumb-item active">4. General Purpose I/O (GPIO)</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/Demon-Lord-10/Bare-Metal/edit/master/docs/04_gpio/gpio.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -143,7 +124,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="general-purpose-inputoutput-gpio">General Purpose Input/Output (GPIO)<a class="headerlink" href="#general-purpose-inputoutput-gpio" title="Permanent link">&para;</a></h1>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<h2 id="1-overview">1. Overview<a class="headerlink" href="#1-overview" title="Permanent link">&para;</a></h2>
 <p>General Purpose Input/Output (GPIO) pins are the primary interface through which a microcontroller interacts with external electronics — reading buttons and sensors, driving status LEDs, controlling displays, or switching communication lines.</p>
 <p>In the STM32F401, pins are grouped into <strong>ports</strong> labeled <strong>A, B, C, D, E, and H</strong>. Each port controls up to <strong>16 physical pins</strong> (labeled Pin 0 through Pin 15). Every pin is highly configurable and can be placed into one of four distinct functional modes:</p>
 <ol>
@@ -153,7 +134,7 @@
 <li><strong>Analog Mode</strong>: Disconnects digital input Schmitt triggers to allow the Analog-to-Digital Converter (ADC) to sample continuous voltage levels without leakage.</li>
 </ol>
 <hr />
-<h2 id="gpio-internal-architecture">GPIO Internal Architecture<a class="headerlink" href="#gpio-internal-architecture" title="Permanent link">&para;</a></h2>
+<h2 id="2-internal-architecture">2. Internal Architecture<a class="headerlink" href="#2-internal-architecture" title="Permanent link">&para;</a></h2>
 <p>Each pin contains internal pull-up/pull-down resistors, protection diodes, an input Schmitt trigger, and dual output transistors (P-MOS and N-MOS):</p>
 <pre><code>                                  VDD (3.3V)
                                      ▲
@@ -175,7 +156,7 @@
                      └───────────────┘
 </code></pre>
 <hr />
-<h2 id="gpio-hardware-registers">GPIO Hardware Registers<a class="headerlink" href="#gpio-hardware-registers" title="Permanent link">&para;</a></h2>
+<h2 id="3-hardware-registers">3. Hardware Registers<a class="headerlink" href="#3-hardware-registers" title="Permanent link">&para;</a></h2>
 <p>Every GPIO port has a dedicated block of memory-mapped registers at an address offset specified in the Reference Manual (RM0368):</p>
 <table>
 <thead>
@@ -250,8 +231,8 @@
 </tbody>
 </table>
 <hr />
-<h2 id="configuration-modes-explained">Configuration Modes Explained<a class="headerlink" href="#configuration-modes-explained" title="Permanent link">&para;</a></h2>
-<h3 id="1-pin-mode-moder">1. Pin Mode (<code>MODER</code>)<a class="headerlink" href="#1-pin-mode-moder" title="Permanent link">&para;</a></h3>
+<h2 id="4-configuration-modes">4. Configuration Modes<a class="headerlink" href="#4-configuration-modes" title="Permanent link">&para;</a></h2>
+<h3 id="41-pin-mode-moder">4.1 Pin Mode (<code>MODER</code>)<a class="headerlink" href="#41-pin-mode-moder" title="Permanent link">&para;</a></h3>
 <p>Each pin uses 2 bits to define its role:</p>
 <table>
 <thead>
@@ -284,8 +265,7 @@
 </tr>
 </tbody>
 </table>
-<hr />
-<h3 id="2-output-type-push-pull-vs-open-drain-otyper">2. Output Type: Push-Pull vs. Open-Drain (<code>OTYPER</code>)<a class="headerlink" href="#2-output-type-push-pull-vs-open-drain-otyper" title="Permanent link">&para;</a></h3>
+<h3 id="42-output-type-push-pull-vs-open-drain-otyper">4.2 Output Type: Push-Pull vs. Open-Drain (<code>OTYPER</code>)<a class="headerlink" href="#42-output-type-push-pull-vs-open-drain-otyper" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Push-Pull (<code>0</code>)</strong>: Both P-MOS and N-MOS transistors are active.</li>
 <li>When driven <strong>HIGH</strong>, the pin actively connects to 3.3V (sources current).</li>
@@ -301,16 +281,14 @@
 <li>An external or internal pull-up resistor is required to pull the line up to VDD.</li>
 <li><em>Essential for shared bus protocols like I2C or multi-drop lines where multiple devices share a line without short-circuit risk.</em></li>
 </ul>
-<hr />
-<h3 id="3-pull-up-pull-down-resistors-pupdr">3. Pull-Up / Pull-Down Resistors (<code>PUPDR</code>)<a class="headerlink" href="#3-pull-up-pull-down-resistors-pupdr" title="Permanent link">&para;</a></h3>
+<h3 id="43-pull-up-pull-down-resistors-pupdr">4.3 Pull-Up / Pull-Down Resistors (<code>PUPDR</code>)<a class="headerlink" href="#43-pull-up-pull-down-resistors-pupdr" title="Permanent link">&para;</a></h3>
 <p>When a pin is configured as an input and nothing is connected to it, it is in a "floating" state and will oscillate unpredictably between 0 and 1 due to ambient electromagnetic noise.</p>
 <ul>
 <li><strong><code>00</code> (None)</strong>: Floating input; used when an external resistor or driver already biases the line.</li>
 <li><strong><code>01</code> (Pull-Up)</strong>: Activates an internal ~40 kΩ resistor connected to 3.3V. Pin reads <code>1</code> when idle.</li>
 <li><strong><code>10</code> (Pull-Down)</strong>: Activates an internal ~40 kΩ resistor connected to GND. Pin reads <code>0</code> when idle.</li>
 </ul>
-<hr />
-<h3 id="4-bit-setreset-register-bsrr">4. Bit Set/Reset Register (<code>BSRR</code>)<a class="headerlink" href="#4-bit-setreset-register-bsrr" title="Permanent link">&para;</a></h3>
+<h3 id="44-bit-setreset-register-bsrr">4.4 Bit Set/Reset Register (<code>BSRR</code>)<a class="headerlink" href="#44-bit-setreset-register-bsrr" title="Permanent link">&para;</a></h3>
 <p>The <code>BSRR</code> is a 32-bit <strong>write-only</strong> register specifically designed to eliminate read-modify-write hazards.</p>
 <pre><code> 31                          16 15                           0
 ┌──────────────────────────────┬──────────────────────────────┐
@@ -319,8 +297,8 @@
 │   Writing 0 has NO effect    │    Writing 0 has NO effect   │
 └──────────────────────────────┴──────────────────────────────┘
 </code></pre>
-<h4 id="why-use-bsrr-instead-of-odr">Why use <code>BSRR</code> instead of <code>ODR</code>?<a class="headerlink" href="#why-use-bsrr-instead-of-odr" title="Permanent link">&para;</a></h4>
-<p>If you use <code>ODR</code> to set a pin:</p>
+<p><strong>Why use <code>BSRR</code> instead of <code>ODR</code>?</strong>
+If you use <code>ODR</code> to set a pin:</p>
 <pre><code class="language-c">port-&gt;ODR |= (1 &lt;&lt; pin); // Read ODR -&gt; Modify bit -&gt; Write ODR
 </code></pre>
 <p>If an interrupt occurs between the Read and the Write and modifies another pin in the same port, the second pin's modification is overwritten and lost when the original code completes.</p>
@@ -329,8 +307,8 @@
 </code></pre>
 <p>Because writing <code>0</code> does nothing, writing to pin $y$ leaves all other 15 pins completely untouched without reading first.</p>
 <hr />
-<h2 id="driver-implementation-walkthrough">Driver Implementation Walkthrough<a class="headerlink" href="#driver-implementation-walkthrough" title="Permanent link">&para;</a></h2>
-<h3 id="1-initializing-a-pin-gpio_init">1. Initializing a Pin (<code>GPIO_Init</code>)<a class="headerlink" href="#1-initializing-a-pin-gpio_init" title="Permanent link">&para;</a></h3>
+<h2 id="5-driver-implementation">5. Driver Implementation<a class="headerlink" href="#5-driver-implementation" title="Permanent link">&para;</a></h2>
+<h3 id="51-initializing-a-pin-gpio_init">5.1 Initializing a Pin (<code>GPIO_Init</code>)<a class="headerlink" href="#51-initializing-a-pin-gpio_init" title="Permanent link">&para;</a></h3>
 <p>The initialization function sets up the pin's mode, speed, pull-up/pull-down configuration, output type, and optional alternate function mapping:</p>
 <pre><code class="language-c">void GPIO_Init(GPIO_TypeDef *port, const GPIO_Config *cfg) {
     // 1. Ensure the port's AHB1 clock is enabled
@@ -365,8 +343,7 @@
     }
 }
 </code></pre>
-<hr />
-<h3 id="2-writing-to-a-pin-gpio_writepin">2. Writing to a Pin (<code>GPIO_WritePin</code>)<a class="headerlink" href="#2-writing-to-a-pin-gpio_writepin" title="Permanent link">&para;</a></h3>
+<h3 id="52-writing-to-a-pin-gpio_writepin">5.2 Writing to a Pin (<code>GPIO_WritePin</code>)<a class="headerlink" href="#52-writing-to-a-pin-gpio_writepin" title="Permanent link">&para;</a></h3>
 <p>This function commands a physical pin to either logic high or logic low using the atomic <code>BSRR</code> register:</p>
 <pre><code class="language-c">void GPIO_WritePin(GPIO_TypeDef *port, uint8_t pin, uint8_t state) {
     if (state)
@@ -375,7 +352,7 @@
         port-&gt;BSRR = (1U &lt;&lt; (pin + 16)); // Reset pin LOW (0V)
 }
 </code></pre>
-<h4 id="what-actually-happens-when-you-call-gpio_writepin">What actually happens when you call <code>GPIO_WritePin</code>?<a class="headerlink" href="#what-actually-happens-when-you-call-gpio_writepin" title="Permanent link">&para;</a></h4>
+<p><strong>What actually happens when you call <code>GPIO_WritePin</code>?</strong></p>
 <ol>
 <li><strong>When <code>state = 1</code></strong>:</li>
 <li>The driver writes to bit <code>pin</code> in <code>BSRR</code> (bits 0–15).</li>
@@ -388,25 +365,23 @@
 <li>The driver writes to bit <code>(pin + 16)</code> in <code>BSRR</code> (bits 16–31).</li>
 <li>The hardware drives the physical pin to <strong>0V / GND (Logic LOW)</strong>.</li>
 </ol>
-<hr />
-<h3 id="hardware-spotlight-active-high-vs-active-low-circuits">💡 Hardware Spotlight: Active-High vs. Active-Low Circuits<a class="headerlink" href="#hardware-spotlight-active-high-vs-active-low-circuits" title="Permanent link">&para;</a></h3>
+<h3 id="53-active-high-vs-active-low-circuits">5.3 Active-High vs. Active-Low Circuits<a class="headerlink" href="#53-active-high-vs-active-low-circuits" title="Permanent link">&para;</a></h3>
 <p>How your circuit reacts to <code>GPIO_WritePin</code> depends entirely on whether it is wired <strong>Active-High</strong> or <strong>Active-Low</strong>:</p>
-<h4 id="case-a-active-high-circuit-standard">Case A: Active-High Circuit (Standard)<a class="headerlink" href="#case-a-active-high-circuit-standard" title="Permanent link">&para;</a></h4>
+<p><strong>Case A: Active-High Circuit (Standard)</strong></p>
 <pre><code>  Pin ───▶ [ Resistor ] ───▶ [ LED Anode (+) ] ───▶ [ Cathode (-) ] ───▶ GND
 </code></pre>
 <ul>
-<li><code>GPIO_WritePin(port, pin, 1)</code> $\rightarrow$ Output is 3.3V $\rightarrow$ Voltage across LED $\rightarrow$ <strong>Turns ON</strong></li>
-<li><code>GPIO_WritePin(port, pin, 0)</code> $\rightarrow$ Output is 0V $\rightarrow$ No voltage difference $\rightarrow$ <strong>Turns OFF</strong></li>
+<li><code>GPIO_WritePin(port, pin, 1)</code> → Output is 3.3V → Voltage across LED → <strong>Turns ON</strong></li>
+<li><code>GPIO_WritePin(port, pin, 0)</code> → Output is 0V → No voltage difference → <strong>Turns OFF</strong></li>
 </ul>
-<h4 id="case-b-active-low-circuit-eg-stm32-blackpill-onboard-led-on-pc13">Case B: Active-Low Circuit (e.g., STM32 BlackPill onboard LED on PC13)<a class="headerlink" href="#case-b-active-low-circuit-eg-stm32-blackpill-onboard-led-on-pc13" title="Permanent link">&para;</a></h4>
+<p><strong>Case B: Active-Low Circuit (e.g., STM32 BlackPill onboard LED on PC13)</strong></p>
 <pre><code>  +3.3V ───▶ [ Resistor ] ───▶ [ LED Anode (+) ] ───▶ [ Cathode (-) ] ───▶ Pin
 </code></pre>
 <ul>
-<li><code>GPIO_WritePin(port, pin, 0)</code> $\rightarrow$ Output is 0V $\rightarrow$ Pin sinks current to GND $\rightarrow$ <strong>Turns ON</strong>!</li>
-<li><code>GPIO_WritePin(port, pin, 1)</code> $\rightarrow$ Output is 3.3V $\rightarrow$ Both sides are at 3.3V $\rightarrow$ <strong>Turns OFF</strong>!</li>
+<li><code>GPIO_WritePin(port, pin, 0)</code> → Output is 0V → Pin sinks current to GND → <strong>Turns ON!</strong></li>
+<li><code>GPIO_WritePin(port, pin, 1)</code> → Output is 3.3V → Both sides at 3.3V → <strong>Turns OFF!</strong></li>
 </ul>
-<hr />
-<h3 id="3-reading-a-pin-gpio_readpin">3. Reading a Pin (<code>GPIO_ReadPin</code>)<a class="headerlink" href="#3-reading-a-pin-gpio_readpin" title="Permanent link">&para;</a></h3>
+<h3 id="54-reading-a-pin-gpio_readpin">5.4 Reading a Pin (<code>GPIO_ReadPin</code>)<a class="headerlink" href="#54-reading-a-pin-gpio_readpin" title="Permanent link">&para;</a></h3>
 <p>Reads the digital voltage level present on the pin via the <code>IDR</code> register:</p>
 <pre><code class="language-c">uint8_t GPIO_ReadPin(GPIO_TypeDef *port, uint8_t pin) {
     if (pin &lt; 16)
@@ -415,8 +390,7 @@
     return 0xFF; // Error code for invalid pin number
 }
 </code></pre>
-<hr />
-<h3 id="4-toggling-a-pin-gpio_togglepin">4. Toggling a Pin (<code>GPIO_TogglePin</code>)<a class="headerlink" href="#4-toggling-a-pin-gpio_togglepin" title="Permanent link">&para;</a></h3>
+<h3 id="55-toggling-a-pin-gpio_togglepin">5.5 Toggling a Pin (<code>GPIO_TogglePin</code>)<a class="headerlink" href="#55-toggling-a-pin-gpio_togglepin" title="Permanent link">&para;</a></h3>
 <p>Inverts the current output state:</p>
 <pre><code class="language-c">void GPIO_TogglePin(GPIO_TypeDef *port, uint8_t pin) {
     if (pin &gt;= 16) return;
@@ -426,7 +400,7 @@
 }
 </code></pre>
 <hr />
-<h2 id="key-takeaways">Key Takeaways<a class="headerlink" href="#key-takeaways" title="Permanent link">&para;</a></h2>
+<h2 id="6-key-takeaways">6. Key Takeaways<a class="headerlink" href="#6-key-takeaways" title="Permanent link">&para;</a></h2>
 <div class="admonition tip">
 <p class="admonition-title">Key Takeaways</p>
 <ol>
@@ -440,7 +414,7 @@
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../03_rcc/rcc/" class="btn btn-neutral float-left" title="Clocks & Bus Architecture"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../03_rcc/rcc/" class="btn btn-neutral float-left" title="3. Reset & Clock Control (RCC)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
     </div>
 
   <hr/>
