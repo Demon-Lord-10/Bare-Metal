@@ -11,7 +11,7 @@
 
 /* Better content width — not too narrow (old 800px), not too wide (none) */
 .wy-nav-content {
-    max-width: 1400px !important;
+    max-width: 1600px !important;
 }
 
 /* Fix ASCII art: consistent monospace font + no wrapping */
