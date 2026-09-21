@@ -1,0 +1,8 @@
+/* Widen the main content area — remove the large right gap */
+.wy-nav-content {
+    max-width: none !important;
+}
+
+.wy-nav-content-wrap {
+    background: #fcfcfc;
+}
