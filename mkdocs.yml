@@ -12,15 +12,19 @@ theme:
     - armasm
     - ld
 
+extra_css:
+  - custom.css
+
 markdown_extensions:
   - admonition
   - tables
   - toc:
       permalink: true
+      toc_depth: 3
 
 nav:
   - Home: index.md
-  - Linker Script:
-      - Memory Layout & Sections: 01_memory_and_linker/linker_script.md
-  - Startup Code:
-      - Reset Handler & Boot: 02_startup_and_boot/startup_assembly.md
+  - 1. Memory Layout & Linker Script: 01_memory_and_linker/linker_script.md
+  - 2. Startup Code & Boot Sequence: 02_startup_and_boot/startup_assembly.md
+  - 3. Reset & Clock Control (RCC): 03_rcc/rcc.md
+  - 4. General Purpose I/O (GPIO): 04_gpio/gpio.md

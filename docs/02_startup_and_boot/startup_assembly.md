@@ -1,6 +1,6 @@
 # Startup Code & Boot Sequence
 
-## Overview
+## 1. Overview
 
 On a desktop PC, the operating system sets up your program's stack, loads globals into memory, and calls `main()`. On a bare-metal Cortex-M4, **there is no OS** — a small piece of hand-written assembly must do all of this before your C code can run.
 
@@ -8,7 +8,7 @@ This page walks through `startup.s` line by line and explains exactly what happe
 
 ---
 
-## The Boot Sequence
+## 2. The Boot Sequence
 
 When the STM32F401 powers on (or resets), the Cortex-M4 core performs a fixed hardware sequence:
 
@@ -54,11 +54,9 @@ Steps 1–3 are done by **hardware** — no software involved. Steps 4–6 are d
 
 ---
 
-## The Complete Startup Code
+## 3. Assembler Directives
 
-Here is the full `startup.s` with every line explained.
-
-### Processor & Instruction Set Directives
+### 3.1 Processor & Instruction Set
 
 ```asm
 .cpu cortex-m4
@@ -70,9 +68,7 @@ Here is the full `startup.s` with every line explained.
 | `.cpu cortex-m4` | Tell the assembler to accept only instructions valid on the Cortex-M4 (ARMv7E-M architecture).<br>This enables DSP instructions and optional FPU instructions. |
 | `.thumb` | Use the **Thumb-2** instruction set. Cortex-M4 *only* supports Thumb/Thumb-2 — it cannot execute classic 32-bit ARM instructions.<br>All vector table entries must have bit 0 set (indicating Thumb mode), which the assembler handles automatically. |
 
----
-
-### Global and External Symbols
+### 3.2 Global and External Symbols
 
 ```asm
 .global reset_handler
@@ -88,7 +84,7 @@ Here is the full `startup.s` with every line explained.
 
 ---
 
-### Vector Table
+## 4. Vector Table
 
 ```asm
 .section .vectors, "a", %progbits
@@ -131,11 +127,11 @@ This is the most hardware-critical part of the entire firmware. The Cortex-M4 ve
 
 ---
 
-### The Reset Handler
+## 5. The Reset Handler
 
 This is the code that runs **first** after every reset. Its job is to set up the C runtime environment.
 
-#### Step 1: Copy `.data` from Flash to RAM
+### 5.1 Copy `.data` from Flash to RAM
 
 ```asm
 .section .text
@@ -169,9 +165,7 @@ This loop copies the initial values of global variables from Flash (where they'r
 
 **The `[r2], #4` syntax**: This is ARM **post-indexed** addressing. It means: load from the address in `r2`, *then* add 4 to `r2`. This is equivalent to `*src++` in C.
 
----
-
-#### Step 2: Zero the `.bss` Section
+### 5.2 Zero the `.bss` Section
 
 ```asm
 data_done:
@@ -189,9 +183,7 @@ bss_loop:
 
 The C standard guarantees that uninitialized global and static variables are zero. Since `.bss` takes up zero space in the Flash binary (to save space), we must explicitly fill that RAM region with zeros.
 
----
-
-#### Step 3: Call `main()` and Hang
+### 5.3 Call `main()` and Hang
 
 ```asm
 bss_done:
@@ -205,7 +197,7 @@ bss_done:
 
 ---
 
-### Default SysTick Handler
+## 6. Default SysTick Handler
 
 ```asm
 .weak systick_handler
@@ -221,7 +213,7 @@ systick_handler:
 
 ---
 
-## How Linker & Startup Work Together
+## 7. How Linker & Startup Work Together
 
 The linker script and startup assembly are tightly coupled through **symbols**. Here's the contract:
 
@@ -243,7 +235,7 @@ If you rename a symbol in one file but not the other, the linker will fail with 
 
 ---
 
-## Key Takeaways
+## 8. Key Takeaways
 
 !!! tip "Key Takeaways"
     1. **The Cortex-M4 boot is table-driven** — the hardware reads an initial SP and a reset vector from Flash. It does not execute the first instruction at address zero.

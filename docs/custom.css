@@ -1,0 +1,19 @@
+/* Extend content area — removes the large right gap */
+.wy-nav-content {
+    max-width: 1100px !important;
+}
+
+/* Fix ASCII art: consistent monospace font + no wrapping */
+pre, pre code {
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace !important;
+    font-size: 0.82em !important;
+    line-height: 1.45 !important;
+    white-space: pre !important;
+    overflow-x: auto;
+}
+
+/* Inline code */
+code {
+    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace !important;
+    font-size: 0.85em !important;
+}

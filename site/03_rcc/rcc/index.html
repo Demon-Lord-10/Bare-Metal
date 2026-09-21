@@ -5,14 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Demon-Lord-10" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Reset and Clock Control (RCC) - STM32F401 Bare-Metal Firmware Notes</title>
+    <title>3. Reset & Clock Control (RCC) - STM32F401 Bare-Metal Firmware Notes</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../custom.css" rel="stylesheet" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Reset and Clock Control (RCC)";
+        var mkdocs_page_name = "3. Reset \u0026 Clock Control (RCC)";
         var mkdocs_page_input_path = "03_rcc/rcc.md";
         var mkdocs_page_url = null;
       </script>
@@ -47,15 +48,57 @@
                 <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
                 </li>
               </ul>
-              <p class="caption"><span class="caption-text">Linker Script</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">Memory Layout & Sections</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../01_memory_and_linker/linker_script/">1. Memory Layout & Linker Script</a>
+                </li>
               </ul>
-              <p class="caption"><span class="caption-text">Startup Code</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">Reset Handler & Boot</a>
-                  </li>
+                <li class="toctree-l1"><a class="reference internal" href="../../02_startup_and_boot/startup_assembly/">2. Startup Code & Boot Sequence</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">3. Reset & Clock Control (RCC)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-overview">1. Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-the-stm32f401-clock-tree">2. The STM32F401 Clock Tree</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#21-clock-sources">2.1 Clock Sources</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-bus-architecture-peripheral-mapping">3. Bus Architecture &amp; Peripheral Mapping</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-key-rcc-registers">4. Key RCC Registers</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#41-rcc_cr-clock-control-register">4.1 RCC_CR — Clock Control Register</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#42-rcc_pllcfgr-pll-configuration-register">4.2 RCC_PLLCFGR — PLL Configuration Register</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#43-rcc_cfgr-clock-configuration-register">4.3 RCC_CFGR — Clock Configuration Register</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#44-rcc_ahb1enr-ahb1-peripheral-clock-enable">4.4 RCC_AHB1ENR — AHB1 Peripheral Clock Enable</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-driver-implementation">5. Driver Implementation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#51-initializing-system-clock-systemclockinit">5.1 Initializing System Clock (SystemClockInit)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#52-enabling-gpio-port-clocks-rcc_gpioclockenable">5.2 Enabling GPIO Port Clocks (RCC_GPIOClockEnable)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#53-generic-clock-enable-helper-rcc_clockenable">5.3 Generic Clock Enable Helper (RCC_ClockEnable)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-key-takeaways">6. Key Takeaways</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../04_gpio/gpio/">4. General Purpose I/O (GPIO)</a>
+                </li>
               </ul>
       </div>
     </div>
@@ -71,7 +114,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Reset and Clock Control (RCC)</li>
+      <li class="breadcrumb-item active">3. Reset & Clock Control (RCC)</li>
     <li class="wy-breadcrumbs-aside">
           <a href="https://github.com/Demon-Lord-10/Bare-Metal/edit/master/docs/03_rcc/rcc.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
@@ -82,42 +125,14 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="reset-and-clock-control-rcc">Reset and Clock Control (RCC)<a class="headerlink" href="#reset-and-clock-control-rcc" title="Permanent link">&para;</a></h1>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<h2 id="1-overview">1. Overview<a class="headerlink" href="#1-overview" title="Permanent link">&para;</a></h2>
 <p>The <strong>Reset and Clock Control (RCC)</strong> peripheral is the heartbeat of the STM32 microcontroller. On modern ARM Cortex-M microcontrollers, power efficiency is a primary architectural goal. Consequently, <strong>every peripheral is clock-gated (powered off) by default</strong>.</p>
 <p>Before you can read or write to any peripheral register — whether it is a GPIO port, a timer, an ADC, or a UART controller — you must first enable its clock through the RCC. Attempting to access a peripheral's registers while its clock is disabled results in either silent failure (writes are ignored) or a <strong>BusFault / HardFault</strong>.</p>
 <hr />
-<h2 id="the-stm32f401-clock-tree">The STM32F401 Clock Tree<a class="headerlink" href="#the-stm32f401-clock-tree" title="Permanent link">&para;</a></h2>
+<h2 id="2-the-stm32f401-clock-tree">2. The STM32F401 Clock Tree<a class="headerlink" href="#2-the-stm32f401-clock-tree" title="Permanent link">&para;</a></h2>
 <p>The STM32F401CCU6 can operate at clock frequencies up to <strong>84 MHz</strong>. To achieve this, it features several internal and external clock sources routed through a Phase-Locked Loop (PLL).</p>
-<pre><code>  Oscillator Sources             Prescalers &amp; PLL                   System Clocks
- ────────────────────           ──────────────────                 ───────────────
-
-  ┌───────────────┐
-  │  HSI (16 MHz) │──────┐
-  └───────────────┘      │
-                         ├────▶ [ SW Mux ] ───────────────────────▶ SYSCLK (up to 84 MHz)
-  ┌───────────────┐      │         ▲                                    │
-  │  HSE (25 MHz) │──┬───┘         │                                    ▼
-  └───────────────┘  │             │                            ┌───────────────┐
-                     │      ┌──────────────┐                    │ AHB Prescaler │
-                     └─────▶│     PLL      │───────────────────▶│   (HPRE)      │
-                            │ (M, N, P, Q) │                    └───────────────┘
-                            └──────────────┘                            │
-                                                                        ├────────▶ HCLK (Core, Memory, DMA)
-                                                                        │          (up to 84 MHz)
-                                                                        │
-                                                                        ├────────▶ AHB1/AHB2 Peripherals
-                                                                        │          (GPIO, RCC, USB...)
-                                                                        │
-                                                                        ▼
-                                                                ┌───────────────┐
-                                                                │ APB Prescalers│
-                                                                │(PPRE1 / PPRE2)│
-                                                                └───────────────┘
-                                                                   │         │
-                                              APB1 (max 42 MHz) ───┘         └─── APB2 (max 84 MHz)
-                                              (TIM2-5, I2C, SPI2/3, USART2)      (TIM1, USART1/6, SPI1/4, ADC)
-</code></pre>
-<h3 id="clock-sources">Clock Sources<a class="headerlink" href="#clock-sources" title="Permanent link">&para;</a></h3>
+<p><img alt="clock.png" src="../clock.png" /></p>
+<h3 id="21-clock-sources">2.1 Clock Sources<a class="headerlink" href="#21-clock-sources" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -155,7 +170,7 @@
 </tbody>
 </table>
 <hr />
-<h2 id="bus-architecture-peripheral-mapping">Bus Architecture &amp; Peripheral Mapping<a class="headerlink" href="#bus-architecture-peripheral-mapping" title="Permanent link">&para;</a></h2>
+<h2 id="3-bus-architecture-peripheral-mapping">3. Bus Architecture &amp; Peripheral Mapping<a class="headerlink" href="#3-bus-architecture-peripheral-mapping" title="Permanent link">&para;</a></h2>
 <p>Peripherals are organized onto distinct internal buses according to their required bandwidth and clock speed:</p>
 <pre><code>  Bus      Max Speed   Peripherals Connected
  ──────   ─────────── ─────────────────────────────────────────────────────────
@@ -169,8 +184,9 @@
 <p>To configure a peripheral, identify which bus it resides on, then set the corresponding enable bit in that bus's clock register (e.g., <code>RCC-&gt;AHB1ENR</code> for GPIO, <code>RCC-&gt;APB1ENR</code> for I2C, <code>RCC-&gt;APB2ENR</code> for USART1).</p>
 </div>
 <hr />
-<h2 id="key-rcc-registers">Key RCC Registers<a class="headerlink" href="#key-rcc-registers" title="Permanent link">&para;</a></h2>
-<h3 id="1-rcc_cr-clock-control-register">1. <code>RCC_CR</code> — Clock Control Register<a class="headerlink" href="#1-rcc_cr-clock-control-register" title="Permanent link">&para;</a></h3>
+<h2 id="4-key-rcc-registers">4. Key RCC Registers<a class="headerlink" href="#4-key-rcc-registers" title="Permanent link">&para;</a></h2>
+<h3 id="41-rcc_cr-clock-control-register">4.1 <code>RCC_CR</code> — Clock Control Register<a class="headerlink" href="#41-rcc_cr-clock-control-register" title="Permanent link">&para;</a></h3>
+<p><img alt="rcc" src="../RCC_CR.png" /></p>
 <p>Controls oscillators and monitors their stability flags:</p>
 <table>
 <thead>
@@ -213,9 +229,9 @@
 </tr>
 </tbody>
 </table>
-<h3 id="2-rcc_pllcfgr-pll-configuration-register">2. <code>RCC_PLLCFGR</code> — PLL Configuration Register<a class="headerlink" href="#2-rcc_pllcfgr-pll-configuration-register" title="Permanent link">&para;</a></h3>
+<h3 id="42-rcc_pllcfgr-pll-configuration-register">4.2 <code>RCC_PLLCFGR</code> — PLL Configuration Register<a class="headerlink" href="#42-rcc_pllcfgr-pll-configuration-register" title="Permanent link">&para;</a></h3>
+<p><img alt="rcc1" src="../RCC_PLLCFGR.png" /></p>
 <p>Formulates the PLL output clock using four dividers/multipliers:</p>
-<p>$$\text{VCO Input} = \frac{f_{\text{IN}}}{M}, \quad f_{\text{VCO}} = \text{VCO Input} \times N, \quad f_{\text{PLL_OUT}} = \frac{f_{\text{VCO}}}{P}$$</p>
 <table>
 <thead>
 <tr>
@@ -258,7 +274,8 @@
 </tr>
 </tbody>
 </table>
-<h3 id="3-rcc_cfgr-clock-configuration-register">3. <code>RCC_CFGR</code> — Clock Configuration Register<a class="headerlink" href="#3-rcc_cfgr-clock-configuration-register" title="Permanent link">&para;</a></h3>
+<h3 id="43-rcc_cfgr-clock-configuration-register">4.3 <code>RCC_CFGR</code> — Clock Configuration Register<a class="headerlink" href="#43-rcc_cfgr-clock-configuration-register" title="Permanent link">&para;</a></h3>
+<p><img alt="rcc3" src="../RCC_CFGR.png" /></p>
 <p>Selects which clock drives <code>SYSCLK</code> and configures bus prescalers:</p>
 <table>
 <thead>
@@ -302,16 +319,11 @@
 </tr>
 </tbody>
 </table>
-<h3 id="4-rcc_ahb1enr-ahb1-peripheral-clock-enable">4. <code>RCC_AHB1ENR</code> — AHB1 Peripheral Clock Enable<a class="headerlink" href="#4-rcc_ahb1enr-ahb1-peripheral-clock-enable" title="Permanent link">&para;</a></h3>
+<h3 id="44-rcc_ahb1enr-ahb1-peripheral-clock-enable">4.4 <code>RCC_AHB1ENR</code> — AHB1 Peripheral Clock Enable<a class="headerlink" href="#44-rcc_ahb1enr-ahb1-peripheral-clock-enable" title="Permanent link">&para;</a></h3>
+<p><img alt="rcc4" src="../RCC_AHB1ENR.png" /></p>
 <p>Enables peripheral clocks on AHB1:</p>
-<pre><code> 31                          7    6    5    4    3    2    1    0
-┌──────────────────────────┬────┬────┬────┬────┬────┬────┬────┬────┐
-│         Reserved         │GPIOH│Res.│Res.│GPIOE│GPIOD│GPIOC│GPIOB│GPIOA│
-└──────────────────────────┴────┴────┴────┴────┴────┴────┴────┴────┘
-</code></pre>
-<hr />
-<h2 id="driver-implementation-walkthrough">Driver Implementation Walkthrough<a class="headerlink" href="#driver-implementation-walkthrough" title="Permanent link">&para;</a></h2>
-<h3 id="1-initializing-system-clock-systemclockinit">1. Initializing System Clock (<code>SystemClockInit</code>)<a class="headerlink" href="#1-initializing-system-clock-systemclockinit" title="Permanent link">&para;</a></h3>
+<h2 id="5-driver-implementation">5. Driver Implementation<a class="headerlink" href="#5-driver-implementation" title="Permanent link">&para;</a></h2>
+<h3 id="51-initializing-system-clock-systemclockinit">5.1 Initializing System Clock (<code>SystemClockInit</code>)<a class="headerlink" href="#51-initializing-system-clock-systemclockinit" title="Permanent link">&para;</a></h3>
 <p>This function transitions the CPU from the default internal 16 MHz HSI to an external 25 MHz crystal stabilized and multiplied by the PLL to target higher operational frequencies.</p>
 <pre><code class="language-c">void SystemClockInit(void) {
     // 1. Turn on External High-Speed Oscillator (HSE)
@@ -343,10 +355,8 @@
     while ((RCC-&gt;CFGR &amp; RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
 }
 </code></pre>
-<h4 id="why-are-wait-loops-while-necessary">Why are wait loops (<code>while</code>) necessary?<a class="headerlink" href="#why-are-wait-loops-while-necessary" title="Permanent link">&para;</a></h4>
-<p>Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via <code>HSERDY</code> and <code>PLLRDY</code>.</p>
-<hr />
-<h3 id="2-enabling-gpio-port-clocks-rcc_gpioclockenable">2. Enabling GPIO Port Clocks (<code>RCC_GPIOClockEnable</code>)<a class="headerlink" href="#2-enabling-gpio-port-clocks-rcc_gpioclockenable" title="Permanent link">&para;</a></h3>
+<p><strong>Why are wait loops (<code>while</code>) necessary?</strong> Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via <code>HSERDY</code> and <code>PLLRDY</code>.</p>
+<h3 id="52-enabling-gpio-port-clocks-rcc_gpioclockenable">5.2 Enabling GPIO Port Clocks (<code>RCC_GPIOClockEnable</code>)<a class="headerlink" href="#52-enabling-gpio-port-clocks-rcc_gpioclockenable" title="Permanent link">&para;</a></h3>
 <p>Because GPIO ports are independent blocks on AHB1, we dynamically enable the port clock by matching the port pointer:</p>
 <pre><code class="language-c">void RCC_GPIOClockEnable(GPIO_TypeDef *port) {
     if (port == GPIOA)
@@ -370,15 +380,14 @@
 RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
 volatile uint32_t dummy = RCC-&gt;AHB1ENR; // Ensures clock is active before register writes</code></p>
 </div>
-<hr />
-<h3 id="3-generic-clock-enable-helper-rcc_clockenable">3. Generic Clock Enable Helper (<code>RCC_ClockEnable</code>)<a class="headerlink" href="#3-generic-clock-enable-helper-rcc_clockenable" title="Permanent link">&para;</a></h3>
+<h3 id="53-generic-clock-enable-helper-rcc_clockenable">5.3 Generic Clock Enable Helper (<code>RCC_ClockEnable</code>)<a class="headerlink" href="#53-generic-clock-enable-helper-rcc_clockenable" title="Permanent link">&para;</a></h3>
 <p>For arbitrary peripherals across various buses, a generic pointer-mask helper enables straightforward configuration:</p>
 <pre><code class="language-c">void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask) {
     *enr |= mask;
 }
 </code></pre>
 <hr />
-<h2 id="key-takeaways">Key Takeaways<a class="headerlink" href="#key-takeaways" title="Permanent link">&para;</a></h2>
+<h2 id="6-key-takeaways">6. Key Takeaways<a class="headerlink" href="#6-key-takeaways" title="Permanent link">&para;</a></h2>
 <div class="admonition tip">
 <p class="admonition-title">Key Takeaways</p>
 <ol>
@@ -391,6 +400,10 @@ volatile uint32_t dummy = RCC-&gt;AHB1ENR; // Ensures clock is active before reg
               
             </div>
           </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../02_startup_and_boot/startup_assembly/" class="btn btn-neutral float-left" title="2. Startup Code & Boot Sequence"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../04_gpio/gpio/" class="btn btn-neutral float-right" title="4. General Purpose I/O (GPIO)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
 
   <hr/>
 
@@ -416,6 +429,10 @@ volatile uint32_t dummy = RCC-&gt;AHB1ENR; // Ensures clock is active before reg
         </span>
     
     
+      <span><a href="../../02_startup_and_boot/startup_assembly/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../04_gpio/gpio/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

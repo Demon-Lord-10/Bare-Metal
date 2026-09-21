@@ -1,6 +1,6 @@
 # General Purpose Input/Output (GPIO)
 
-## Overview
+## 1. Overview
 
 General Purpose Input/Output (GPIO) pins are the primary interface through which a microcontroller interacts with external electronics — reading buttons and sensors, driving status LEDs, controlling displays, or switching communication lines.
 
@@ -13,7 +13,7 @@ In the STM32F401, pins are grouped into **ports** labeled **A, B, C, D, E, and H
 
 ---
 
-## GPIO Internal Architecture
+## 2. Internal Architecture
 
 Each pin contains internal pull-up/pull-down resistors, protection diodes, an input Schmitt trigger, and dual output transistors (P-MOS and N-MOS):
 
@@ -40,7 +40,7 @@ Each pin contains internal pull-up/pull-down resistors, protection diodes, an in
 
 ---
 
-## GPIO Hardware Registers
+## 3. Hardware Registers
 
 Every GPIO port has a dedicated block of memory-mapped registers at an address offset specified in the Reference Manual (RM0368):
 
@@ -59,9 +59,9 @@ Every GPIO port has a dedicated block of memory-mapped registers at an address o
 
 ---
 
-## Configuration Modes Explained
+## 4. Configuration Modes
 
-### 1. Pin Mode (`MODER`)
+### 4.1 Pin Mode (`MODER`)
 
 Each pin uses 2 bits to define its role:
 
@@ -72,9 +72,7 @@ Each pin uses 2 bits to define its role:
 | `10` | **Alternate Function** | Internal peripheral (USART, SPI, TIM) drives and senses the pin. |
 | `11` | **Analog** | Disconnects the digital buffer to save power and enable ADC sampling. |
 
----
-
-### 2. Output Type: Push-Pull vs. Open-Drain (`OTYPER`)
+### 4.2 Output Type: Push-Pull vs. Open-Drain (`OTYPER`)
 
 - **Push-Pull (`0`)**: Both P-MOS and N-MOS transistors are active.
   - When driven **HIGH**, the pin actively connects to 3.3V (sources current).
@@ -87,9 +85,7 @@ Each pin uses 2 bits to define its role:
   - An external or internal pull-up resistor is required to pull the line up to VDD.
   - *Essential for shared bus protocols like I2C or multi-drop lines where multiple devices share a line without short-circuit risk.*
 
----
-
-### 3. Pull-Up / Pull-Down Resistors (`PUPDR`)
+### 4.3 Pull-Up / Pull-Down Resistors (`PUPDR`)
 
 When a pin is configured as an input and nothing is connected to it, it is in a "floating" state and will oscillate unpredictably between 0 and 1 due to ambient electromagnetic noise.
 
@@ -97,9 +93,7 @@ When a pin is configured as an input and nothing is connected to it, it is in a 
 - **`01` (Pull-Up)**: Activates an internal ~40 kΩ resistor connected to 3.3V. Pin reads `1` when idle.
 - **`10` (Pull-Down)**: Activates an internal ~40 kΩ resistor connected to GND. Pin reads `0` when idle.
 
----
-
-### 4. Bit Set/Reset Register (`BSRR`)
+### 4.4 Bit Set/Reset Register (`BSRR`)
 
 The `BSRR` is a 32-bit **write-only** register specifically designed to eliminate read-modify-write hazards.
 
@@ -112,7 +106,7 @@ The `BSRR` is a 32-bit **write-only** register specifically designed to eliminat
 └──────────────────────────────┴──────────────────────────────┘
 ```
 
-#### Why use `BSRR` instead of `ODR`?
+**Why use `BSRR` instead of `ODR`?**
 If you use `ODR` to set a pin:
 ```c
 port->ODR |= (1 << pin); // Read ODR -> Modify bit -> Write ODR
@@ -127,9 +121,9 @@ Because writing `0` does nothing, writing to pin $y$ leaves all other 15 pins co
 
 ---
 
-## Driver Implementation Walkthrough
+## 5. Driver Implementation
 
-### 1. Initializing a Pin (`GPIO_Init`)
+### 5.1 Initializing a Pin (`GPIO_Init`)
 
 The initialization function sets up the pin's mode, speed, pull-up/pull-down configuration, output type, and optional alternate function mapping:
 
@@ -168,9 +162,7 @@ void GPIO_Init(GPIO_TypeDef *port, const GPIO_Config *cfg) {
 }
 ```
 
----
-
-### 2. Writing to a Pin (`GPIO_WritePin`)
+### 5.2 Writing to a Pin (`GPIO_WritePin`)
 
 This function commands a physical pin to either logic high or logic low using the atomic `BSRR` register:
 
@@ -183,7 +175,7 @@ void GPIO_WritePin(GPIO_TypeDef *port, uint8_t pin, uint8_t state) {
 }
 ```
 
-#### What actually happens when you call `GPIO_WritePin`?
+**What actually happens when you call `GPIO_WritePin`?**
 
 1. **When `state = 1`**:
    - The driver writes to bit `pin` in `BSRR` (bits 0–15).
@@ -193,29 +185,25 @@ void GPIO_WritePin(GPIO_TypeDef *port, uint8_t pin, uint8_t state) {
    - The driver writes to bit `(pin + 16)` in `BSRR` (bits 16–31).
    - The hardware drives the physical pin to **0V / GND (Logic LOW)**.
 
----
-
-### 💡 Hardware Spotlight: Active-High vs. Active-Low Circuits
+### 5.3 Active-High vs. Active-Low Circuits
 
 How your circuit reacts to `GPIO_WritePin` depends entirely on whether it is wired **Active-High** or **Active-Low**:
 
-#### Case A: Active-High Circuit (Standard)
+**Case A: Active-High Circuit (Standard)**
 ```
   Pin ───▶ [ Resistor ] ───▶ [ LED Anode (+) ] ───▶ [ Cathode (-) ] ───▶ GND
 ```
-- `GPIO_WritePin(port, pin, 1)` $\rightarrow$ Output is 3.3V $\rightarrow$ Voltage across LED $\rightarrow$ **Turns ON**
-- `GPIO_WritePin(port, pin, 0)` $\rightarrow$ Output is 0V $\rightarrow$ No voltage difference $\rightarrow$ **Turns OFF**
+- `GPIO_WritePin(port, pin, 1)` → Output is 3.3V → Voltage across LED → **Turns ON**
+- `GPIO_WritePin(port, pin, 0)` → Output is 0V → No voltage difference → **Turns OFF**
 
-#### Case B: Active-Low Circuit (e.g., STM32 BlackPill onboard LED on PC13)
+**Case B: Active-Low Circuit (e.g., STM32 BlackPill onboard LED on PC13)**
 ```
   +3.3V ───▶ [ Resistor ] ───▶ [ LED Anode (+) ] ───▶ [ Cathode (-) ] ───▶ Pin
 ```
-- `GPIO_WritePin(port, pin, 0)` $\rightarrow$ Output is 0V $\rightarrow$ Pin sinks current to GND $\rightarrow$ **Turns ON**!
-- `GPIO_WritePin(port, pin, 1)` $\rightarrow$ Output is 3.3V $\rightarrow$ Both sides are at 3.3V $\rightarrow$ **Turns OFF**!
+- `GPIO_WritePin(port, pin, 0)` → Output is 0V → Pin sinks current to GND → **Turns ON!**
+- `GPIO_WritePin(port, pin, 1)` → Output is 3.3V → Both sides at 3.3V → **Turns OFF!**
 
----
-
-### 3. Reading a Pin (`GPIO_ReadPin`)
+### 5.4 Reading a Pin (`GPIO_ReadPin`)
 
 Reads the digital voltage level present on the pin via the `IDR` register:
 
@@ -228,9 +216,7 @@ uint8_t GPIO_ReadPin(GPIO_TypeDef *port, uint8_t pin) {
 }
 ```
 
----
-
-### 4. Toggling a Pin (`GPIO_TogglePin`)
+### 5.5 Toggling a Pin (`GPIO_TogglePin`)
 
 Inverts the current output state:
 
@@ -245,7 +231,7 @@ void GPIO_TogglePin(GPIO_TypeDef *port, uint8_t pin) {
 
 ---
 
-## Key Takeaways
+## 6. Key Takeaways
 
 !!! tip "Key Takeaways"
     1. **Two bits per pin for mode**: `MODER` uses 2 bits per pin. Pin 13 occupies bits 26 and 27 (`13 * 2`).

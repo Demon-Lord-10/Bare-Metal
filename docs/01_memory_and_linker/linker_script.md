@@ -1,6 +1,6 @@
 # Memory Layout & Linker Script
 
-## Overview
+## 1. Overview
 
 When you compile C code for a desktop, the OS loader handles placing your program in memory. On a bare-metal microcontroller, **there is no OS** — the linker script is your memory manager. It tells the GNU linker (`ld`) exactly where every byte of your firmware lives in the chip's address space.
 
@@ -15,7 +15,7 @@ The linker script answers all of these questions.
 
 ---
 
-## STM32F401 Memory Map
+## 2. STM32F401 Memory Map
 
 The Cortex-M4 uses a fixed 4 GB address space. The STM32F401CCU6 populates it like this:
 
@@ -66,11 +66,11 @@ The Cortex-M4 uses a fixed 4 GB address space. The STM32F401CCU6 populates it li
 
 ---
 
-## The Complete Linker Script
+## 3. The Complete Linker Script
 
 Here is the full `linker.ld` with section-by-section analysis.
 
-### Entry Point
+### 3.1 Entry Point
 
 ```ld
 ENTRY(reset_handler)
@@ -78,9 +78,7 @@ ENTRY(reset_handler)
 
 This tells the linker which symbol is the program's entry point. Debuggers (GDB, OpenOCD) use this to know where to set the initial program counter. On a real Cortex-M4, the hardware ignores this — it reads the reset vector from the vector table at address `0x0800_0004`. But specifying it keeps the linker from discarding `reset_handler` as unused, and makes debugging tools happy.
 
----
-
-### Memory Regions
+### 3.2 Memory Regions
 
 ```ld
 MEMORY {
@@ -96,9 +94,7 @@ MEMORY {
 
 The attributes (`rx`, `rwx`) are hints to the linker. If you accidentally try to place a writable section into `ROM`, the linker will emit a warning.
 
----
-
-### Stack Pointer Initialization
+### 3.3 Stack Pointer Initialization
 
 ```ld
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -120,9 +116,11 @@ This symbol is placed as the **very first word** in the vector table (offset `0x
 
 ---
 
-### Sections
+## 4. Section Definitions
 
-#### `.vectors` — Vector Table
+Each ELF section has a specific role. They are placed in the order the linker encounters them.
+
+### 4.1 `.vectors` — Vector Table
 
 ```ld
 .vectors : {
@@ -135,9 +133,7 @@ This symbol is placed as the **very first word** in the vector table (offset `0x
 - **`> ROM`**: Places this section at the start of Flash (`0x0800_0000`). The Cortex-M4 **requires** the vector table to begin at the base of the boot memory region.
 - **`ALIGN(4)`**: Ensures 4-byte alignment. ARM instructions and data accesses must be word-aligned.
 
----
-
-#### `.text` — Executable Code
+### 4.2 `.text` — Executable Code
 
 ```ld
 .text : {
@@ -150,9 +146,7 @@ This symbol is placed as the **very first word** in the vector table (offset `0x
 
 All compiled function bodies go here. The `*(.text*)` wildcard catches compiler-generated subsections like `.text.startup` or `.text.unlikely` (used by GCC's `-ffunction-sections`).
 
----
-
-#### `.rodata` — Read-Only Data
+### 4.3 `.rodata` — Read-Only Data
 
 ```ld
 .rodata : {
@@ -165,9 +159,7 @@ All compiled function bodies go here. The `*(.text*)` wildcard catches compiler-
 
 String literals (`"Hello"`) and `const` global variables are placed here. They live in Flash because they never need to be written.
 
----
-
-#### `.data` — Initialized Global Variables
+### 4.4 `.data` — Initialized Global Variables
 
 ```ld
 _sidata = LOADADDR(.data);
@@ -203,30 +195,28 @@ So at boot, the startup code must **copy** the initial values from Flash (LMA) t
 | `_edata` | Destination end — end of `.data` in RAM (VMA) |
 
 ```
-  Flash (ROM)                          RAM
-  ┌──────────────┐                   ┌──────────────┐
-  │  .vectors    │                   │              │
-  │  .text       │                   │              │
-  │  .rodata     │                   │              │
-  ├──────────────┤                   ├──────────────┤
-  │  .data (LMA) │ ──── copy ────▶   │  .data (VMA) │
-  │  _sidata     │    at boot        │  _sdata      │
-  │              │                   │  _edata      │
-  └──────────────┘                   ├──────────────┤
-                                     │  .bss        │
-                                     │  _sbss       │
-                                     │  _ebss       │
-                                     ├──────────────┤
-                                     │     ▲        │
-                                     │   stack      │
-                                     │              │
-                                     │  _estack     │
-                                     └──────────────┘
+  Flash (ROM)                                RAM
+  ┌──────────────┐                     ┌──────────────┐
+  │  .vectors    │                     │              │
+  │  .text       │                     │              │
+  │  .rodata     │                     │              │
+  ├──────────────┤                     ├──────────────┤
+  │  .data (LMA) │ ──────────────────▶ │  .data (VMA) │
+  │  _sidata     │    copy at boot     │  _sdata      │
+  │              │                     │  _edata      │
+  └──────────────┘                     ├──────────────┤
+                                       │  .bss        │
+                                       │  _sbss       │
+                                       │  _ebss       │
+                                       ├──────────────┤
+                                       │     ▲        │
+                                       │   stack      │
+                                       │              │
+                                       │  _estack     │
+                                       └──────────────┘
 ```
 
----
-
-#### `.bss` — Zero-Initialized Variables
+### 4.5 `.bss` — Zero-Initialized Variables
 
 ```ld
 .bss : {
@@ -244,9 +234,7 @@ Uninitialized or zero-initialized global variables (`static int x;`, `int arr[10
 
 `*(COMMON)` catches old-style C "tentative definitions" (e.g., `int x;` in multiple files without `extern`).
 
----
-
-#### `/DISCARD/` — Throw Away Unwanted Sections
+### 4.6 `/DISCARD/` — Throw Away Unwanted Sections
 
 ```ld
 /DISCARD/ : {
@@ -258,7 +246,7 @@ The `.comment` section contains compiler version strings. It's useless on an emb
 
 ---
 
-## Key Takeaways
+## 5. Key Takeaways
 
 !!! tip "Key Takeaways"
     1. **The linker script is the memory map** — it tells the linker where Flash and RAM are, and which sections go where.

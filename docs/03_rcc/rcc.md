@@ -1,49 +1,22 @@
 # Reset and Clock Control (RCC)
 
-## Overview
+## 1. Overview
 
 The **Reset and Clock Control (RCC)** peripheral is the heartbeat of the STM32 microcontroller. On modern ARM Cortex-M microcontrollers, power efficiency is a primary architectural goal. Consequently, **every peripheral is clock-gated (powered off) by default**.
 
 Before you can read or write to any peripheral register — whether it is a GPIO port, a timer, an ADC, or a UART controller — you must first enable its clock through the RCC. Attempting to access a peripheral's registers while its clock is disabled results in either silent failure (writes are ignored) or a **BusFault / HardFault**.
 
+In our example we will set the system clock(HCLK) to be 24MHz.
+
 ---
 
-## The STM32F401 Clock Tree
+## 2. The STM32F401 Clock Tree
 
 The STM32F401CCU6 can operate at clock frequencies up to **84 MHz**. To achieve this, it features several internal and external clock sources routed through a Phase-Locked Loop (PLL).
 
-```
-  Oscillator Sources             Prescalers & PLL                   System Clocks
- ────────────────────           ──────────────────                 ───────────────
+![clock.png](clock.png)
 
-  ┌───────────────┐
-  │  HSI (16 MHz) │──────┐
-  └───────────────┘      │
-                         ├────▶ [ SW Mux ] ───────────────────────▶ SYSCLK (up to 84 MHz)
-  ┌───────────────┐      │         ▲                                    │
-  │  HSE (25 MHz) │──┬───┘         │                                    ▼
-  └───────────────┘  │             │                            ┌───────────────┐
-                     │      ┌──────────────┐                    │ AHB Prescaler │
-                     └─────▶│     PLL      │───────────────────▶│   (HPRE)      │
-                            │ (M, N, P, Q) │                    └───────────────┘
-                            └──────────────┘                            │
-                                                                        ├────────▶ HCLK (Core, Memory, DMA)
-                                                                        │          (up to 84 MHz)
-                                                                        │
-                                                                        ├────────▶ AHB1/AHB2 Peripherals
-                                                                        │          (GPIO, RCC, USB...)
-                                                                        │
-                                                                        ▼
-                                                                ┌───────────────┐
-                                                                │ APB Prescalers│
-                                                                │(PPRE1 / PPRE2)│
-                                                                └───────────────┘
-                                                                   │         │
-                                              APB1 (max 42 MHz) ───┘         └─── APB2 (max 84 MHz)
-                                              (TIM2-5, I2C, SPI2/3, USART2)      (TIM1, USART1/6, SPI1/4, ADC)
-```
-
-### Clock Sources
+### 2.1 Clock Sources
 
 | Source | Name | Typical Frequency | Characteristics |
 |---|---|---|---|
@@ -54,7 +27,7 @@ The STM32F401CCU6 can operate at clock frequencies up to **84 MHz**. To achieve 
 
 ---
 
-## Bus Architecture & Peripheral Mapping
+## 3. Bus Architecture & Peripheral Mapping
 
 Peripherals are organized onto distinct internal buses according to their required bandwidth and clock speed:
 
@@ -72,9 +45,11 @@ Peripherals are organized onto distinct internal buses according to their requir
 
 ---
 
-## Key RCC Registers
+## 4. Key RCC Registers
 
-### 1. `RCC_CR` — Clock Control Register
+### 4.1 `RCC_CR` — Clock Control Register
+
+![rcc](RCC_CR.png)
 
 Controls oscillators and monitors their stability flags:
 
@@ -87,11 +62,12 @@ Controls oscillators and monitors their stability flags:
 | 24 | `PLLON` | Turn on Main PLL (1 = ON) |
 | 25 | `PLLRDY` | Main PLL ready flag (1 = Locked and stable) |
 
-### 2. `RCC_PLLCFGR` — PLL Configuration Register
+### 4.2 `RCC_PLLCFGR` — PLL Configuration Register
+
+![rcc1](RCC_PLLCFGR.png)
 
 Formulates the PLL output clock using four dividers/multipliers:
 
-$$\text{VCO Input} = \frac{f_{\text{IN}}}{M}, \quad f_{\text{VCO}} = \text{VCO Input} \times N, \quad f_{\text{PLL\_OUT}} = \frac{f_{\text{VCO}}}{P}$$
 
 | Field | Name | Bits | Purpose |
 |---|---|---|---|
@@ -101,7 +77,11 @@ $$\text{VCO Input} = \frac{f_{\text{IN}}}{M}, \quad f_{\text{VCO}} = \text{VCO I
 | `PLLP` | Main System Division P | 17:16 | Divides VCO to system clock (`00`=/2, `01`=/4, `10`=/6, `11`=/8) |
 | `PLLQ` | USB OTG FS Division Q | 27:24 | Divides VCO to 48 MHz for USB operations |
 
-### 3. `RCC_CFGR` — Clock Configuration Register
+In our case we have PLLSRC is HSE and the frequeny is 25MHz and PLLM=25 PLLN=192 and PLLP=8 which gives the PLL frequency to be 24MHz.
+
+### 4.3 `RCC_CFGR` — Clock Configuration Register
+
+![rcc3](RCC_CFGR.png)
 
 Selects which clock drives `SYSCLK` and configures bus prescalers:
 
@@ -113,22 +93,15 @@ Selects which clock drives `SYSCLK` and configures bus prescalers:
 | `PPRE1[2:0]` | APB1 Prescaler | 12:10 | `0xx` = Not divided, `100` = /2 (APB1 max is 42 MHz!) |
 | `PPRE2[2:0]` | APB2 Prescaler | 15:13 | `0xx` = Not divided, `100` = /2 |
 
-### 4. `RCC_AHB1ENR` — AHB1 Peripheral Clock Enable
+### 4.4 `RCC_AHB1ENR` — AHB1 Peripheral Clock Enable
+
+![rcc4](RCC_AHB1ENR.png)
 
 Enables peripheral clocks on AHB1:
 
-```
- 31                          7    6    5    4    3    2    1    0
-┌──────────────────────────┬────┬────┬────┬────┬────┬────┬────┬────┐
-│         Reserved         │GPIOH│Res.│Res.│GPIOE│GPIOD│GPIOC│GPIOB│GPIOA│
-└──────────────────────────┴────┴────┴────┴────┴────┴────┴────┴────┘
-```
+## 5. Driver Implementation
 
----
-
-## Driver Implementation Walkthrough
-
-### 1. Initializing System Clock (`SystemClockInit`)
+### 5.1 Initializing System Clock (`SystemClockInit`)
 
 This function transitions the CPU from the default internal 16 MHz HSI to an external 25 MHz crystal stabilized and multiplied by the PLL to target higher operational frequencies.
 
@@ -138,7 +111,7 @@ void SystemClockInit(void) {
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY)); // Wait until HSE is stable
 
-    // 2. Configure PLL factors (Source = HSE, M = 25, N = 192, P = 4)
+    // 2. Configure PLL factors (Source = HSE, M = 25, N = 192, P = 8)
     RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN
                     | RCC_PLLCFGR_PLLP   | RCC_PLLCFGR_PLLQ);
 
@@ -164,12 +137,9 @@ void SystemClockInit(void) {
 }
 ```
 
-#### Why are wait loops (`while`) necessary?
-Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via `HSERDY` and `PLLRDY`.
+**Why are wait loops (`while`) necessary?** Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via `HSERDY` and `PLLRDY`.
 
----
-
-### 2. Enabling GPIO Port Clocks (`RCC_GPIOClockEnable`)
+### 5.2 Enabling GPIO Port Clocks (`RCC_GPIOClockEnable`)
 
 Because GPIO ports are independent blocks on AHB1, we dynamically enable the port clock by matching the port pointer:
 
@@ -197,9 +167,7 @@ void RCC_GPIOClockEnable(GPIO_TypeDef *port) {
     volatile uint32_t dummy = RCC->AHB1ENR; // Ensures clock is active before register writes
     ```
 
----
-
-### 3. Generic Clock Enable Helper (`RCC_ClockEnable`)
+### 5.3 Generic Clock Enable Helper (`RCC_ClockEnable`)
 
 For arbitrary peripherals across various buses, a generic pointer-mask helper enables straightforward configuration:
 
@@ -211,7 +179,7 @@ void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask) {
 
 ---
 
-## Key Takeaways
+## 6. Key Takeaways
 
 !!! tip "Key Takeaways"
     1. **Clock Gating by Default**: All peripheral hardware starts in a powered-off state. You must explicitly set the corresponding bit in `RCC_AHBxENR` or `RCC_APBxENR`.
