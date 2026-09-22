@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This project is a from-scratch, bare-metal firmware environment for the **STM32F401CCU6** microcontroller — an ARM Cortex-M4 core running at up to 84 MHz, with 256 KB Flash and 64 KB SRAM.
+This project is for learning bare-metal driver development and to understand low level concepts. I have taken help of Claude and Gemini to make these notes. This implementation will be the bare minimum meaning that not all the features will be implemented and the minimal code to make it work will be used (for now).
 
 **Bare-metal** means there is no operating system, no HAL library, and no vendor-generated startup code. Every byte that runs on the chip — from the vector table to the linker memory map — is written and understood by hand. The goal is to learn what actually happens between plugging in power and reaching `main()`.
 
@@ -18,8 +18,7 @@ This project is a from-scratch, bare-metal firmware environment for the **STM32F
 | **CMSIS only** | Thin register-level access, no bloat | Still relies on vendor startup files |
 | **Bare-metal (this project)** | Full understanding, minimal binary, total control | Slow to develop, must read datasheets carefully |
 
-This project takes the third approach: we write our own **linker script**, **startup assembly**, and **peripheral drivers** using only the CMSIS device headers for register definitions.
-
+We will also make use of open source toolchain like gcc , Make, OpenOCD etc.
 ---
 
 ## Target Hardware

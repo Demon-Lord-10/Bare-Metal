@@ -23,7 +23,36 @@ The STM32F401CCU6 can operate at clock frequencies up to **84 MHz**. To achieve 
 | **HSI** | High-Speed Internal | 16 MHz | Built-in RC oscillator. Available instantly at power-up; slightly temperature-sensitive. |
 | **HSE** | High-Speed External | 4–26 MHz (25 MHz on BlackPill) | External quartz crystal. High accuracy, required for stable USB and precision timing. |
 | **PLL** | Phase-Locked Loop | Up to 84 MHz | Multiplies and divides HSI or HSE to generate higher system frequencies. |
-| **LSI / LSE** | Low-Speed Internal / External | 32 kHz | Dedicated for the Independent Watchdog (IWDG) and Real-Time Clock (RTC). |
+| **LSI** (Low-Speed Internal) | ~32 kHz | Internal low-power RC | Internal RC oscillator. Low-power, low-cost, but low accuracy. Used for IWDG and AWU; keeps running in Stop/Standby mode. |
+| **LSE** (Low-Speed External) | 32.768 kHz | External watch crystal | External watch crystal. Low-power but highly accurate. Used for RTC clock/calendar functions. |
+
+#### HSE (High Speed External Clock):
+The high speed external clock signal (HSE) can be generated from two possible clock sources:
+- HSE external crystal/ceramic resonator
+- HSE external user clock
+The resonator and the load capacitors have to be placed as close as possible to the oscillator pins in order to minimize output distortion and startup stabilization time. The loading capacitance values must be adjusted according to the selected oscillator.
+
+#### HSI (High Speed Internal Clock):
+The HSI clock signal is generated from an internal 16 MHz RC oscillator and can be used directly as a system clock, or used as PLL input.
+The HSI RC oscillator has the advantage of providing a clock source at low cost (no external components). It also has a faster startup time than the HSE crystal oscillator however, even with calibration the frequency is less accurate than an external crystal oscillator or ceramic resonator.
+
+Note:The default clock is HSI if not configured.
+
+#### PLL (Phase Locked Loop):
+The PLL is used to generate a higher-speed system clock from a lower-frequency input clock source. It takes either HSI or HSE as its input reference clock and multiplies it up to produce a higher output frequency, allowing the microcontroller to run at its maximum system clock speed even though the input oscillators (HSI/HSE) run at lower frequencies.
+- PLL input source can be selected as either HSI or HSE (via a configurable input MUX/divider).
+- The input clock is divided and then multiplied by configurable factors(down below) to produce the desired PLL output frequency.
+- The PLL output can then be selected as the system clock (SYSCLK).
+- Using the PLL allows flexibility — a low-cost or low-power source like HSI can still drive the system at high speed.
+- The PLL requires a short lock time to stabilize before its output can be reliably used as the system clock.
+
+Note: PLL isn't multiply-only — it has input/output dividers too, so it can divide as well as multiply.
+
+#### LSE (Low Speed External Clock):
+The LSE clock is generated using a 32.768 kHz low speed external crystal or ceramic resonator. It has the advantage of providing a low-power but highly accurate clock source to the real-time clock peripheral (RTC) for clock/calendar or other timing functions.
+
+#### LSI (Low Speed Internal Clock):
+The LSI RC acts as a low-power clock source that can be kept running in Stop and Standby mode for the independent watchdog (IWDG) and Auto-wakeup unit (AWU). The clock frequency is around 32 kHz.
 
 ---
 
@@ -97,7 +126,13 @@ Selects which clock drives `SYSCLK` and configures bus prescalers:
 
 ![rcc4](RCC_AHB1ENR.png)
 
-Enables peripheral clocks on AHB1:
+Enables peripheral clocks on AHB1.
+
+#### **Why are we setting the clock frequency to 24MHz?**
+
+Since our HCLK < 30 MHz, we don't need any wait cycles, and therefore no FLASH_ACR wait state configuration is required. This keeps SystemClockInit() simpler — at higher SYSCLK frequencies (e.g. 84 MHz), you'd need to set the appropriate flash latency bits before switching SYSCLK to the PLL, otherwise the CPU can fetch corrupted instructions. Staying under 30 MHz lets us skip that step entirely.
+
+![Wait](Wait.png)
 
 ## 5. Driver Implementation
 
@@ -137,7 +172,8 @@ void SystemClockInit(void) {
 }
 ```
 
-**Why are wait loops (`while`) necessary?** Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via `HSERDY` and `PLLRDY`.
+**Why are wait loops (`while`) necessary?** 
+Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via `HSERDY` and `PLLRDY`.
 
 ### 5.2 Enabling GPIO Port Clocks (`RCC_GPIOClockEnable`)
 
@@ -159,6 +195,8 @@ void RCC_GPIOClockEnable(GPIO_TypeDef *port) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
 }
 ```
+
+Also note we are not clearing the bits since there is only one bit so we can just OR it but for other cases we need to clear for more than 1 bit and then OR it.
 
 !!! tip "Hardware Delay After Clock Enable"
     According to the STM32 Cortex-M4 programming guidelines, after setting a bit in an enable register (such as `AHB1ENR`), a delay of at least two peripheral bus cycles is required before accessing the peripheral's registers. In practice, performing a dummy read guarantees the bus has synchronized:
@@ -186,3 +224,4 @@ void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask) {
     2. **Wait for Ready Flags**: Never switch clock sources without verifying the respective `*RDY` flag in `RCC_CR`.
     3. **Respect Bus Limits**: APB1 maximum frequency is **42 MHz**, whereas AHB and APB2 can reach **84 MHz**.
     4. **Bus Synchronization**: Allow a small delay or execute a dummy read on the enable register before modifying peripheral registers.
+	5. **Wait States**: Flash wait states must be configured whenever HCLK exceeds the safe read threshold (30 MHz at typical VDD) — staying below it, as with our 24 MHz setup, lets you skip FLASH_ACR configuration entirely.
