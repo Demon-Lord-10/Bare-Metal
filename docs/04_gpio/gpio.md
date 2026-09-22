@@ -17,26 +17,7 @@ In the STM32F401, pins are grouped into **ports** labeled **A, B, C, D, E, and H
 
 Each pin contains internal pull-up/pull-down resistors, protection diodes, an input Schmitt trigger, and dual output transistors (P-MOS and N-MOS):
 
-```
-                                  VDD (3.3V)
-                                     ▲
-                                     │  [Pull-up Resistor]
-                                     ├─────/ ─────┐
-                                     │            │
-  Output Data        ┌──────┐        │    P-MOS   │
-  Register (ODR) ───▶│Output│───────┬┴───┤ ◄──────┼────────────┐
-  or BSRR            │Logic │       │             │            │
-                     └──────┘       └────┤ ◄──────┤            ▼
-                                          N-MOS   │       Physical Pin
-                                     ┌─────/ ─────┘            │
-                                     │  [Pull-down Resistor]   │
-                                     ▼                         │
-                                    VSS (GND)                  │
-                                                               │
-  Input Data         ┌───────────────┐                         │
-  Register (IDR) ◀───│Schmitt Trigger│◀────────────────────────┘
-                     └───────────────┘
-```
+![gpio](gpio.png)
 
 ---
 

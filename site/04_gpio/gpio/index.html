@@ -137,25 +137,7 @@
 <hr />
 <h2 id="2-internal-architecture">2. Internal Architecture<a class="headerlink" href="#2-internal-architecture" title="Permanent link">&para;</a></h2>
 <p>Each pin contains internal pull-up/pull-down resistors, protection diodes, an input Schmitt trigger, and dual output transistors (P-MOS and N-MOS):</p>
-<pre><code>                                  VDD (3.3V)
-                                     ▲
-                                     │  [Pull-up Resistor]
-                                     ├─────/ ─────┐
-                                     │            │
-  Output Data        ┌──────┐        │    P-MOS   │
-  Register (ODR) ───▶│Output│───────┬┴───┤ ◄──────┼────────────┐
-  or BSRR            │Logic │       │             │            │
-                     └──────┘       └────┤ ◄──────┤            ▼
-                                          N-MOS   │       Physical Pin
-                                     ┌─────/ ─────┘            │
-                                     │  [Pull-down Resistor]   │
-                                     ▼                         │
-                                    VSS (GND)                  │
-                                                               │
-  Input Data         ┌───────────────┐                         │
-  Register (IDR) ◀───│Schmitt Trigger│◀────────────────────────┘
-                     └───────────────┘
-</code></pre>
+<p><img alt="gpio" src="../gpio.png" /></p>
 <hr />
 <h2 id="3-hardware-registers">3. Hardware Registers<a class="headerlink" href="#3-hardware-registers" title="Permanent link">&para;</a></h2>
 <p>Every GPIO port has a dedicated block of memory-mapped registers at an address offset specified in the Reference Manual (RM0368):</p>
