@@ -209,7 +209,8 @@ Tracing the clock path: Looking at the clock tree diagram, the path a peripheral
 
 Because a peripheral clock has to propagate through this whole chain before it's actually live at the peripheral, there's a small but real delay between setting the enable bit and the clock signal reaching the peripheral.
 
-Also note we are not clearing the bits since there is only one bit so we can just OR it but for other cases we need to clear for more than 1 bit and then OR it.
+!!! note "Why only |= and no clear step here?"
+Each branch above sets exactly one bit, so a plain |= is safe — it turns that bit on without disturbing any others. This only works because we know just one bit is being touched at a time.
 
 !!! tip "Hardware Delay After Clock Enable"
     According to the STM32 Cortex-M4 programming guidelines, after setting a bit in an enable register (such as `AHB1ENR`), a delay of at least two peripheral bus cycles is required before accessing the peripheral's registers. In practice, performing a dummy read guarantees the bus has synchronized:
