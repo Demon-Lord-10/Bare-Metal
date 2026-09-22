@@ -53,6 +53,8 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#we-will-also-make-use-of-open-source-toolchain-like-gcc-make-openocd-etc">We will also make use of open source toolchain like gcc , Make, OpenOCD etc.</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#target-hardware">Target Hardware</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#table-of-contents">Table of Contents</a>
@@ -108,7 +110,7 @@
 <p><strong>Study notes for developing bare-metal firmware on the STM32F401CCU6 (WeAct BlackPill).</strong></p>
 <hr />
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
-<p>This project is a from-scratch, bare-metal firmware environment for the <strong>STM32F401CCU6</strong> microcontroller — an ARM Cortex-M4 core running at up to 84 MHz, with 256 KB Flash and 64 KB SRAM.</p>
+<p>This project is for learning bare-metal driver development and to understand low level concepts. I have taken help of Claude and Gemini to make these notes. This implementation will be the bare minimum meaning that not all the features will be implemented and the minimal code to make it work will be used (for now).</p>
 <p><strong>Bare-metal</strong> means there is no operating system, no HAL library, and no vendor-generated startup code. Every byte that runs on the chip — from the vector table to the linker memory map — is written and understood by hand. The goal is to learn what actually happens between plugging in power and reaching <code>main()</code>.</p>
 <h3 id="why-bare-metal">Why Bare-Metal?<a class="headerlink" href="#why-bare-metal" title="Permanent link">&para;</a></h3>
 <table>
@@ -137,8 +139,7 @@
 </tr>
 </tbody>
 </table>
-<p>This project takes the third approach: we write our own <strong>linker script</strong>, <strong>startup assembly</strong>, and <strong>peripheral drivers</strong> using only the CMSIS device headers for register definitions.</p>
-<hr />
+<h2 id="we-will-also-make-use-of-open-source-toolchain-like-gcc-make-openocd-etc">We will also make use of open source toolchain like gcc , Make, OpenOCD etc.<a class="headerlink" href="#we-will-also-make-use-of-open-source-toolchain-like-gcc-make-openocd-etc" title="Permanent link">&para;</a></h2>
 <h2 id="target-hardware">Target Hardware<a class="headerlink" href="#target-hardware" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -308,5 +309,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-09-21 18:54:23.457003+00:00
+Build Date UTC : 2026-09-22 19:34:52.356736+00:00
 -->

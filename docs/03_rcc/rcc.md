@@ -36,7 +36,7 @@ The resonator and the load capacitors have to be placed as close as possible to 
 The HSI clock signal is generated from an internal 16 MHz RC oscillator and can be used directly as a system clock, or used as PLL input.
 The HSI RC oscillator has the advantage of providing a clock source at low cost (no external components). It also has a faster startup time than the HSE crystal oscillator however, even with calibration the frequency is less accurate than an external crystal oscillator or ceramic resonator.
 
-Note:The default clock is HSI if not configured.
+Note: The default clock is HSI if not configured.
 
 #### PLL (Phase Locked Loop):
 The PLL is used to generate a higher-speed system clock from a lower-frequency input clock source. It takes either HSI or HSE as its input reference clock and multiplies it up to produce a higher output frequency, allowing the microcontroller to run at its maximum system clock speed even though the input oscillators (HSI/HSE) run at lower frequencies.
@@ -53,6 +53,14 @@ The LSE clock is generated using a 32.768 kHz low speed external crystal or cera
 
 #### LSI (Low Speed Internal Clock):
 The LSI RC acts as a low-power clock source that can be kept running in Stop and Standby mode for the independent watchdog (IWDG) and Auto-wakeup unit (AWU). The clock frequency is around 32 kHz.
+
+### 2.3 SYSCLK vs. HCLK vs. FCLK (Cortex Clock)
+SYSCLK: The System Clock (SYSCLK) serves as the primary clock source for the microcontroller. It can be sourced from various inputs like the internal HSI, external HSE, or a PLL. SYSCLK determines the clock speed for the AHB bus after passing through the AHB Prescaler.
+
+HCLK: The High-Speed Clock (HCLK) is essentially SYSCLK after it has been divided by the AHB Prescaler. HCLK is crucial because it feeds several critical components such as the Cortex core, the AHB bus, memory interfaces, and DMA controllers.
+
+FCLK: The Cortex Clock (FCLK) is the clock source specifically for the processor core. Generally, FCLK is directly derived from HCLK, meaning they often run at the same frequency. However, under certain low-power scenarios or other special conditions, FCLK may differ from HCLK.
+
 
 ---
 
@@ -172,6 +180,7 @@ void SystemClockInit(void) {
 }
 ```
 
+
 **Why are wait loops (`while`) necessary?** 
 Physical oscillators take milliseconds to stabilize their vibration frequency, and the PLL analog feedback loop takes microseconds to lock phase. Switching the CPU clock to an unready oscillator causes immediate code execution lockup. The hardware signals readiness via `HSERDY` and `PLLRDY`.
 
@@ -195,6 +204,10 @@ void RCC_GPIOClockEnable(GPIO_TypeDef *port) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
 }
 ```
+
+Tracing the clock path: Looking at the clock tree diagram, the path a peripheral clock takes is: System Clock MUX → SYSCLK → AHB Prescaler → HCLK. From HCLK, the clock branches out to power the Cortex core, the AHB bus, memory, and DMA directly, while also feeding the APB1 and APB2 buses (via their respective prescalers) which in turn drive peripheral modules like timers, USART, and I2C.
+
+Because a peripheral clock has to propagate through this whole chain before it's actually live at the peripheral, there's a small but real delay between setting the enable bit and the clock signal reaching the peripheral.
 
 Also note we are not clearing the bits since there is only one bit so we can just OR it but for other cases we need to clear for more than 1 bit and then OR it.
 
