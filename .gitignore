@@ -1,7 +1,17 @@
-# comment — ignored line
-*.log               # ignore all files ending in .log, anywhere in the repo
-build/              # ignore a folder named "build" anywhere
-obj/                # ignore obj
-site/               # ignore site
-mkdocs.yml          # ignore .yml
-compile_flags.txt   # ignore compiler_flags
+# ignore all files ending in .log, anywhere in the repo
+*.log
+
+# ignore a folder named "build" anywhere
+build/
+
+# ignore obj
+obj/
+
+# ignore generated docs site
+site/
+
+# ignore mkdocs config
+mkdocs.yml
+
+# ignore compiler flags
+compile_flags.txt
