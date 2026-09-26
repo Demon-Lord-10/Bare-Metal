@@ -23,8 +23,8 @@ The STM32F401CCU6 can operate at clock frequencies up to **84 MHz**. To achieve 
 | **HSI** | High-Speed Internal | 16 MHz | Built-in RC oscillator. Available instantly at power-up; slightly temperature-sensitive. |
 | **HSE** | High-Speed External | 4–26 MHz (25 MHz on BlackPill) | External quartz crystal. High accuracy, required for stable USB and precision timing. |
 | **PLL** | Phase-Locked Loop | Up to 84 MHz | Multiplies and divides HSI or HSE to generate higher system frequencies. |
-| **LSI** (Low-Speed Internal) | ~32 kHz | Internal low-power RC | Internal RC oscillator. Low-power, low-cost, but low accuracy. Used for IWDG and AWU; keeps running in Stop/Standby mode. |
-| **LSE** (Low-Speed External) | 32.768 kHz | External watch crystal | External watch crystal. Low-power but highly accurate. Used for RTC clock/calendar functions. |
+| **LSI** | ~32 kHz | Internal low-power RC | Internal RC oscillator. Low-power, low-cost, but low accuracy. Used for IWDG and AWU; keeps running in Stop/Standby mode. |
+| **LSE** | 32.768 kHz | External watch crystal | External watch crystal. Low-power but highly accurate. Used for RTC clock/calendar functions. |
 
 #### HSE (High Speed External Clock):
 The high speed external clock signal (HSE) can be generated from two possible clock sources:
@@ -239,3 +239,80 @@ void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask) {
     3. **Respect Bus Limits**: APB1 maximum frequency is **42 MHz**, whereas AHB and APB2 can reach **84 MHz**.
     4. **Bus Synchronization**: Allow a small delay or execute a dummy read on the enable register before modifying peripheral registers.
 	5. **Wait States**: Flash wait states must be configured whenever HCLK exceeds the safe read threshold (30 MHz at typical VDD) — staying below it, as with our 24 MHz setup, lets you skip FLASH_ACR configuration entirely.
+
+## 7. RCC & Clock Tree Brush-Up Questions & Answers
+
+**1. Why are peripherals clock-gated by default on ARM Cortex-M MCUs?**
+To save power — an unused peripheral consuming clock cycles wastes energy for nothing, so hardware keeps every peripheral's clock off until software explicitly enables it.
+
+**2. What happens if you try to access a peripheral's registers before enabling its clock?**
+The write is either silently ignored, or on stricter cores generates a BusFault/HardFault, since the register bus has no live clock to complete the transaction.
+
+**3. What is HSI, and what's its main advantage over HSE?**
+HSI is a 16 MHz internal RC oscillator. Its advantage is instant availability at power-up with no external components — HSE needs a crystal and a stabilization delay.
+
+**4. What is HSE, and why would you use it over HSI?**
+HSE is an external crystal/resonator (4–26 MHz). It's far more frequency-accurate than HSI, which matters for precision timing and is mandatory for stable USB operation.
+
+**5. What does the PLL do, and why is it needed?**
+The PLL multiplies (and divides) a lower-frequency input clock (HSI or HSE) up to a much higher frequency, letting the MCU run at its maximum speed even from a cheap or low-power source oscillator.
+
+**6. What are LSI and LSE used for?**
+LSI (~32 kHz internal) powers the independent watchdog and auto-wakeup and keeps running in low-power modes. LSE (32.768 kHz external crystal) drives the RTC for accurate clock/calendar timing.
+
+**7. What is the difference between SYSCLK and HCLK?**
+SYSCLK is the raw selected system clock source (HSI/HSE/PLL). HCLK is SYSCLK after passing through the AHB prescaler — it's what actually feeds the core, AHB bus, memory, and DMA.
+
+**8. What is FCLK, and how does it usually relate to HCLK?**
+FCLK is the clock specifically for the Cortex-M core. It's normally the same frequency as HCLK, differing only in certain low-power/special conditions.
+
+**9. Why are peripherals split across AHB1, AHB2, APB1, and APB2 buses instead of one shared bus?**
+Different peripherals have different bandwidth and speed needs; splitting buses lets high-speed peripherals (GPIO, DMA) run at full core speed while slower ones (some timers, USART2) share a lower-speed bus without holding back the fast ones.
+
+**10. Which bus has the lowest maximum frequency on the STM32F401, and what does that mean practically?**
+APB1, capped at 42 MHz — peripherals on it (TIM2-5, I2C1-3, USART2, SPI2/3) can never run faster than that, even if SYSCLK itself is higher.
+
+**11. What register would you check, and what bit, to confirm HSE has stabilized before using it?**
+`RCC_CR`, the `HSERDY` bit (bit 17) — it reads 1 once the external oscillator's output is stable.
+
+**12. Why does switching SYSCLK to the PLL require a `while` loop polling `SWS`, not just setting `SW`?**
+Setting `SW` only requests the switch; the hardware takes a few cycles to actually complete it. `SWS` is the read-only status confirming which source is *actually* active, so polling it avoids proceeding on a switch that hasn't taken effect yet.
+
+**13. What does `PLLM` do, and why is there a "recommended 1–2 MHz" input range for it?**
+`PLLM` divides the input reference clock down before it enters the PLL's voltage-controlled oscillator (VCO). The 1–2 MHz range is recommended because the VCO's internal phase comparator is designed and characterized for accurate locking within that input range — feeding it too high or low a frequency degrades PLL stability/accuracy.
+
+**14. What is the difference between `PLLN` and `PLLP`?**
+`PLLN` multiplies the divided input up to the internal VCO frequency (constrained roughly 192–432 MHz). `PLLP` then divides that VCO output down to the final SYSCLK frequency.
+
+**15. Why does `PLLQ` exist separately from `PLLP`?**
+Because USB requires an exact 48 MHz clock, which usually isn't the same frequency needed for SYSCLK. `PLLQ` gives an independent divider off the same VCO so USB can get 48 MHz regardless of what SYSCLK is set to.
+
+**16. Why must you enable a peripheral's clock before configuring its registers, and where is that enable bit typically located?**
+Because until the clock reaches the peripheral, its registers are unpowered and non-responsive; the enable bit lives in the corresponding bus's enable register (`RCC_AHB1ENR`, `RCC_APB1ENR`, `RCC_APB2ENR`), matching whichever bus that peripheral is wired to.
+
+**17. Why is a short delay (or dummy read) recommended immediately after setting a peripheral clock-enable bit?**
+The enable signal takes a few peripheral bus cycles to actually propagate and synchronize before the peripheral is truly ready; accessing its registers immediately after setting the bit can hit it before it's live, and a dummy read forces the bus transaction to complete first.
+
+**18. What are flash wait states, and why does raising HCLK eventually require them?**
+Wait states are extra CPU cycles inserted when reading flash memory, because flash access time doesn't scale as fast as CPU clock speed — above a certain HCLK threshold (~30 MHz at typical VDD on STM32F401), the core would fetch corrupted/incomplete instructions without added latency cycles to let flash catch up.
+
+**19. In the code example, why is `RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;` used instead of a clear-then-set pattern?**
+Because exactly one bit is being modified and nothing else in that register needs to change — a plain OR sets that bit without disturbing any other peripheral's already-enabled clock bit, so a clear step is unnecessary and would risk masking bits it shouldn't.
+
+**20. Why must HSE be turned on and confirmed ready before configuring `PLLCFGR` with `PLLSRC` = HSE?**
+The PLL's input reference must already be a stable, running clock before you can feed it into the PLL and expect a reliable lock — configuring the PLL to source from an oscillator that isn't yet oscillating produces an undefined/unlocked PLL output.
+
+**21. What would happen if you switched SYSCLK to the PLL (`SW = PLL`) before `PLLRDY` was set?**
+The system clock mux would be pointed at an output that isn't stable or valid yet, risking the CPU running on a glitchy or wrong-frequency clock — potentially causing an immediate crash or unpredictable execution.
+
+**22. Why does the clock tree route through prescalers (`HPRE`, `PPRE1`, `PPRE2`) instead of every bus running at raw SYSCLK speed?**
+Different peripheral buses have different maximum rated speeds (e.g., APB1's 42 MHz ceiling); prescalers let you run the core/AHB at full speed while independently scaling down APB1/APB2 to stay within each bus's own frequency limit.
+
+**23. If you needed USB OTG FS to work correctly, what part of the PLL configuration becomes mandatory, and why?**
+`PLLQ` must be set so the PLL's USB output tap equals exactly 48 MHz — USB timing tolerances are tight enough that any deviation from 48 MHz will cause the USB peripheral to fail to enumerate or communicate reliably.
+
+**24. Why is HSE generally required (rather than HSI) for stable USB operation, even though HSI can also feed the PLL?**
+USB's tight clock accuracy requirements exceed what HSI's internal RC oscillator can reliably provide over temperature and voltage variation; HSE's crystal-based accuracy is needed to keep the derived 48 MHz within USB's tolerance.
+
+**25. Trace the full clock path from HSE to a GPIO register write being valid — what has to happen in order?**
+HSE is enabled and confirmed ready (`HSERDY`) → PLL is configured with HSE as source and appropriate M/N/P → PLL is enabled and confirmed locked (`PLLRDY`) → SYSCLK is switched to PLL and confirmed active (`SWS`) → HCLK derives from SYSCLK via the AHB prescaler → the GPIO port's AHB1 clock-enable bit is set in `RCC_AHB1ENR` → after allowing bus synchronization (dummy read/delay), the GPIO's registers are live and safe to write.
