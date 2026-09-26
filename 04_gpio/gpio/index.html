@@ -334,7 +334,7 @@
 <h3 id="44-bit-setreset-register-bsrr">4.4 Bit Set/Reset Register (<code>BSRR</code>)<a class="headerlink" href="#44-bit-setreset-register-bsrr" title="Permanent link">&para;</a></h3>
 <p>The <code>BSRR</code> is a 32-bit <strong>write-only</strong> register specifically designed to eliminate read-modify-write hazards.</p>
 <p><img alt="bsrr" src="../bsrr.png" /></p>
-<p><strong>Why use <code>BSRR</code> instead of <code>ODR</code>?</strong>
+<p><strong>Why use <code>BSRR</code> instead of <code>ODR</code>?</strong><br />
 If you use <code>ODR</code> to set a pin:</p>
 <pre><code class="language-c">port-&gt;ODR |= (1 &lt;&lt; pin); // Read ODR -&gt; Modify bit -&gt; Write ODR
 </code></pre>
@@ -454,55 +454,55 @@ If you use <code>ODR</code> to set a pin:</p>
 </ol>
 </div>
 <h2 id="7-gpio-brush-up-questions-answers">7. GPIO Brush-Up Questions &amp; Answers<a class="headerlink" href="#7-gpio-brush-up-questions-answers" title="Permanent link">&para;</a></h2>
-<p><strong>1. What does GPIO stand for, and what problem does it solve compared to fixed-function pins?</strong>
+<p><strong>1. What does GPIO stand for, and what problem does it solve compared to fixed-function pins?</strong><br />
 GPIO = General Purpose Input/Output. It solves the problem of fixed-function pins being hardwired to one job at chip design time — GPIO lets software decide at runtime what a pin does, so one chip design can serve many different products/wiring needs.</p>
-<p><strong>2. What are the typical configurable directions/modes of a GPIO pin?</strong>
+<p><strong>2. What are the typical configurable directions/modes of a GPIO pin?</strong><br />
 Digital input, digital output (push-pull or open-drain), alternate function (handed to a peripheral like UART/SPI/I2C/Timer), and analog mode (for ADC/DAC).</p>
-<p><strong>3. What is the difference between a digital input and an analog input?</strong>
+<p><strong>3. What is the difference between a digital input and an analog input?</strong><br />
 A digital input only cares whether the voltage is above/below a threshold (Schmitt trigger gives a clean 0/1). An analog input passes the raw continuous voltage straight to an ADC, bypassing the Schmitt trigger entirely so the actual voltage level is preserved.</p>
-<p><strong>4. Why does a floating input pin read unpredictable values?</strong>
+<p><strong>4. Why does a floating input pin read unpredictable values?</strong><br />
 With nothing driving it and no pull resistor enabled, the pin's voltage is determined by ambient electrical noise (EMI, capacitive coupling from nearby traces), so it floats near the switching threshold and can read either 0 or 1 unpredictably, sometimes toggling rapidly.</p>
-<p><strong>5. What is a pull-up resistor, and what is a pull-down resistor?</strong>
+<p><strong>5. What is a pull-up resistor, and what is a pull-down resistor?</strong><br />
 A pull-up is a weak internal/external resistor to VDD that biases an unconnected pin to read HIGH by default; a pull-down does the same to GND, biasing it to read LOW by default. Both are easily overridden by an active driver.</p>
-<p><strong>6. What is a Schmitt trigger, and why is it used on GPIO inputs?</strong>
+<p><strong>6. What is a Schmitt trigger, and why is it used on GPIO inputs?</strong><br />
 A Schmitt trigger is a comparator with two thresholds (V_IH, V_IL) instead of one, creating a hysteresis gap. It's used on GPIO inputs to reject noise near the switching point and produce a fast, clean digital edge even from a slow or noisy input signal.</p>
-<p><strong>7. What's the difference between push-pull and open-drain output modes?</strong>
+<p><strong>7. What's the difference between push-pull and open-drain output modes?</strong><br />
 Push-pull actively drives both HIGH (via P-MOS) and LOW (via N-MOS). Open-drain only actively drives LOW (N-MOS); reaching HIGH requires an external or internal pull-up resistor, since the P-MOS is permanently off.</p>
-<p><strong>8. Why is open-drain output required for I2C bus lines?</strong>
+<p><strong>8. Why is open-drain output required for I2C bus lines?</strong><br />
 I2C is a shared bus where multiple devices must be able to pull the line low without conflict. Open-drain lets any device pull LOW safely; if devices used push-pull, two devices driving opposite levels simultaneously would short-circuit VDD to GND.</p>
-<p><strong>9. What happens electrically when you configure a pin as "analog mode"?</strong>
+<p><strong>9. What happens electrically when you configure a pin as "analog mode"?</strong><br />
 The digital input buffer (Schmitt trigger) is disabled, and the output driver is disconnected — the raw pin voltage is routed directly to the ADC/DAC via a separate analog path, avoiding digitization or leakage that would distort the analog reading.</p>
-<p><strong>10. What is the default state of GPIO pins immediately after MCU reset, and why?</strong>
+<p><strong>10. What is the default state of GPIO pins immediately after MCU reset, and why?</strong><br />
 Most MCUs default GPIO pins to input mode (high-impedance, often with a defined default pull) after reset, so the chip doesn't accidentally drive conflicting signals into other hardware before firmware has configured pins intentionally.</p>
-<p><strong>11. What is debouncing, and why is it needed for mechanical buttons?</strong>
+<p><strong>11. What is debouncing, and why is it needed for mechanical buttons?</strong><br />
 Debouncing filters out the rapid electrical bouncing a mechanical switch produces for a few milliseconds when its contacts physically settle. Without it, a single button press can register as multiple presses.</p>
-<p><strong>12. What is the difference between sourcing and sinking current?</strong>
+<p><strong>12. What is the difference between sourcing and sinking current?</strong><br />
 Sourcing current means the pin actively supplies current out to an external load (via P-MOS, pin at HIGH). Sinking current means the pin absorbs current flowing into it (via N-MOS, pin at LOW).</p>
-<p><strong>13. Can a single GPIO pin usually be both input and output at the same time?</strong>
+<p><strong>13. Can a single GPIO pin usually be both input and output at the same time?</strong><br />
 No — a GPIO pin's direction (input or output) is a single configuration setting at any given time; it's one or the other, not simultaneously both, though software can rapidly reconfigure a pin between the two.</p>
-<p><strong>14. What's the purpose of an alternate function (AF) mode on a pin?</strong>
+<p><strong>14. What's the purpose of an alternate function (AF) mode on a pin?</strong><br />
 Alternate function mode hands the pin's input/output path to an internal peripheral (UART, SPI, I2C, Timer/PWM) instead of plain software-controlled GPIO logic, via muxes on both the input and output side, letting one physical pin serve multiple hardware roles.</p>
-<p><strong>15. What is a "5V tolerant" pin, and why don't all pins have this feature?</strong>
+<p><strong>15. What is a "5V tolerant" pin, and why don't all pins have this feature?</strong><br />
 A 5V-tolerant (FT) pin has its protection diode clamped to a separate, higher rail (VDD_FT) instead of the core VDD, so it can safely accept input voltages above VDD (e.g., 5V into a 3.3V chip). Not all pins have this because it requires extra silicon/rail routing, and it's only needed on pins likely to interface with higher-voltage external logic.</p>
-<p><strong>16. Why is a read-modify-write on an output register potentially unsafe in an interrupt-driven system, and how does an atomic set/reset register solve this?</strong>
+<p><strong>16. Why is a read-modify-write on an output register potentially unsafe in an interrupt-driven system, and how does an atomic set/reset register solve this?</strong><br />
 A read-modify-write (<code>ODR |= bit</code>) reads the register, changes one bit, then writes it back. If an interrupt fires between the read and write and modifies a different bit in the same register, that change gets overwritten and lost. An atomic set/reset register (BSRR) lets you flip a single bit with one pure write — no read involved — so it can never race with another write to the same register.</p>
-<p><strong>17. Explain how a GPIO-based edge-triggered interrupt (EXTI-style) works, and why multiple ports often share one interrupt line per pin number.</strong>
+<p><strong>17. Explain how a GPIO-based edge-triggered interrupt (EXTI-style) works, and why multiple ports often share one interrupt line per pin number.</strong><br />
 Each GPIO pin number can be routed to one shared EXTI interrupt line (e.g., all pin-0s across every port share EXTI0), configurable to fire on rising, falling, or both edges. Multiple ports share one line per pin number because the interrupt controller has limited lines, so only one port's pin-N can be an EXTI source at a time — you pick which port via a separate mux register.</p>
-<p><strong>18. Why must you enable a peripheral's bus clock before configuring its GPIO registers on many ARM MCUs?</strong>
+<p><strong>18. Why must you enable a peripheral's bus clock before configuring its GPIO registers on many ARM MCUs?</strong><br />
 GPIO peripheral registers sit on a bus (e.g., AHB1) that is clock-gated by default to save power; until you enable that specific peripheral's clock in the RCC, the registers are unpowered/unresponsive, so writes to them silently do nothing — a classic "code compiles but nothing happens" bug.</p>
-<p><strong>19. What limits how many LEDs you can directly drive from GPIO pins, beyond "one pin, one LED"?</strong>
+<p><strong>19. What limits how many LEDs you can directly drive from GPIO pins, beyond "one pin, one LED"?</strong><br />
 Each pin has an individual max current rating (~20-25 mA), but the chip package also has a total current budget shared across all pins/VSS pins combined, which is usually far more restrictive — driving several LEDs at max current per pin can exceed this total limit even if no single pin is over its own rating.</p>
-<p><strong>20. How would you generate a PWM signal using GPIO, and what additional peripheral is actually responsible for the toggling?</strong>
+<p><strong>20. How would you generate a PWM signal using GPIO, and what additional peripheral is actually responsible for the toggling?</strong><br />
 PWM isn't generated by GPIO logic itself — a timer peripheral toggles the pin through the alternate-function output path, with the timer's compare/counter registers controlling duty cycle and frequency; GPIO just needs to be configured in AF mode to let the timer drive it.</p>
-<p><strong>21. What's the difference between accessing GPIO via memory-mapped registers (bare metal) and via a Linux GPIO subsystem like <code>libgpiod</code>?</strong>
+<p><strong>21. What's the difference between accessing GPIO via memory-mapped registers (bare metal) and via a Linux GPIO subsystem like <code>libgpiod</code>?</strong><br />
 Bare metal writes directly to memory-mapped registers with zero abstraction — the write instruction is the hardware action. <code>libgpiod</code>/the Linux GPIO subsystem goes through the kernel's character device interface (<code>/dev/gpiochipN</code>), adding OS-level abstraction, permission checks, and syscall overhead, trading raw speed for portability and safety.</p>
-<p><strong>22. Why would a GPIO pin's output speed/slew-rate setting matter for a real design (EMI, power, signal integrity)?</strong>
+<p><strong>22. Why would a GPIO pin's output speed/slew-rate setting matter for a real design (EMI, power, signal integrity)?</strong><br />
 Higher slew rate settings mean faster voltage transitions on the pin, which increases radiated EMI and instantaneous switching current — bad for noise-sensitive analog circuits or EMC compliance. Lower slew rate reduces noise/power but limits the maximum clean frequency the pin can drive (e.g., a fast SPI clock needs a higher speed setting).</p>
-<p><strong>23. Describe active-high vs. active-low circuit design and why "sending a 1" doesn't always mean "turning something on."</strong>
+<p><strong>23. Describe active-high vs. active-low circuit design and why "sending a 1" doesn't always mean "turning something on."</strong><br />
 Active-high means writing a 1 turns the connected device ON (pin sources current through it to ground); active-low means writing a 0 turns it ON (pin sinks current from VDD through the device). "Sending a 1" only means "on" in active-high wiring — in active-low circuits (common for onboard LEDs), writing 1 actually turns it OFF.</p>
-<p><strong>24. What is a GPIO expander, and when would you need one?</strong>
+<p><strong>24. What is a GPIO expander, and when would you need one?</strong><br />
 A GPIO expander (e.g., MCP23017) is an external chip, usually controlled over I2C or SPI, that provides extra GPIO pins beyond what the MCU exposes natively. You need one when your design requires more I/O pins than the MCU package has available.</p>
-<p><strong>25. How would you design and debounce a button-driven interrupt handler that must be reliable at scale (multiple buttons, minimal CPU overhead)?</strong>
+<p><strong>25. How would you design and debounce a button-driven interrupt handler that must be reliable at scale (multiple buttons, minimal CPU overhead)?</strong><br />
 Use edge-triggered EXTI interrupts (not polling) to avoid wasting CPU cycles, debounce in the ISR with a short hardware/software timer or state-machine check rather than blocking delays, and if many buttons share one interrupt line, read a status/pending register in the ISR to identify which specific pin triggered before acting.</p>
               
             </div>
