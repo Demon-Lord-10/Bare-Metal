@@ -4,32 +4,33 @@ void GPIO_Init(GPIO_TypeDef *port, const GPIO_Config *cfg){
 
     RCC_GPIOClockEnable(port);
 
-    port->MODER  &= ~(0x3<< cfg->pin*2);
-    port->MODER  |=  (cfg->mode << cfg->pin*2);
+    port->MODER  &= ~(3UL<< cfg->pin*2UL);
+    port->MODER  |=  (cfg->mode << cfg->pin*2UL);
 
-    port->OTYPER &= ~(1<< cfg->pin);
+    port->OTYPER &= ~(1UL<< cfg->pin);
     port->OTYPER |= (cfg->otype << cfg->pin);
 
-    port->OSPEEDR &= ~(0x3 << cfg->pin*2);
-    port->OSPEEDR |= (cfg->speed << cfg->pin*2);
+    port->OSPEEDR &= ~(3UL<< cfg->pin*2UL);
+    port->OSPEEDR |= (cfg->speed << cfg->pin*2UL);
 
-    port->PUPDR &= ~(0x3 << cfg->pin*2);
-    port->PUPDR |= (cfg->pull << cfg->pin*2);
+    port->PUPDR &= ~(3UL<< cfg->pin*2UL);
+    port->PUPDR |= (cfg->pull << cfg->pin*2UL);
 
     if(cfg->mode == GPIO_MODE_AFM){
-        uint8_t shift = (cfg->pin>7)? cfg->pin-8 : cfg->pin;
-        if((cfg->pin<8)){
-            port->AFR[0] &= ~(0xF << (4*(shift)));
-            port->AFR[0] |= (cfg->af << (4*shift));
+        uint8_t shift = (cfg->pin>7UL)? cfg->pin-8UL : cfg->pin;
+        if((cfg->pin<8UL)){
+            port->AFR[0] &= ~(0xF << (4UL*(shift)));
+            port->AFR[0] |= (cfg->af << (4UL*shift));
         }
         else{
-            port->AFR[1] &= ~(0xF << (4*shift));
-            port->AFR[1] |= (cfg->af << (4*shift));
+            port->AFR[1] &= ~(0xF << (4UL*shift));
+            port->AFR[1] |= (cfg->af << (4UL*shift));
         }
     }
 }
 
 void GPIO_WritePin(GPIO_TypeDef *port, uint8_t pin, uint8_t state){
+    if (pin >= 16UL) return;
     if(state) 
         port->BSRR = (1UL<<pin);
     else
@@ -38,7 +39,7 @@ void GPIO_WritePin(GPIO_TypeDef *port, uint8_t pin, uint8_t state){
 
 uint8_t GPIO_ReadPin(GPIO_TypeDef *port, uint8_t pin)
 {
-    if(pin<16)
+    if(pin<16UL)
         return (0x1 & (port->IDR>>pin));
 
     return 0xFF;
