@@ -19,6 +19,7 @@ Instead of treating the microcontroller as a black box:
 - **Toolchain**: `arm-none-eabi-gcc`, GNU Make, OpenOCD
 
 All datasheets are present in the datasheet section.
+
 ---
 
 ## 📁 Project Structure
