@@ -26,19 +26,19 @@ The STM32F401CCU6 can operate at clock frequencies up to **84 MHz**. To achieve 
 | **LSI** | ~32 kHz | Internal low-power RC | Internal RC oscillator. Low-power, low-cost, but low accuracy. Used for IWDG and AWU; keeps running in Stop/Standby mode. |
 | **LSE** | 32.768 kHz | External watch crystal | External watch crystal. Low-power but highly accurate. Used for RTC clock/calendar functions. |
 
-#### HSE (High Speed External Clock):
+#### 2.1.1 HSE (High Speed External Clock):
 The high speed external clock signal (HSE) can be generated from two possible clock sources:
 - HSE external crystal/ceramic resonator
 - HSE external user clock
 The resonator and the load capacitors have to be placed as close as possible to the oscillator pins in order to minimize output distortion and startup stabilization time. The loading capacitance values must be adjusted according to the selected oscillator.
 
-#### HSI (High Speed Internal Clock):
+#### 2.1.2 HSI (High Speed Internal Clock):
 The HSI clock signal is generated from an internal 16 MHz RC oscillator and can be used directly as a system clock, or used as PLL input.
 The HSI RC oscillator has the advantage of providing a clock source at low cost (no external components). It also has a faster startup time than the HSE crystal oscillator however, even with calibration the frequency is less accurate than an external crystal oscillator or ceramic resonator.
 
 Note: The default clock is HSI if not configured.
 
-#### PLL (Phase Locked Loop):
+#### 2.1.3 PLL (Phase Locked Loop):
 The PLL is used to generate a higher-speed system clock from a lower-frequency input clock source. It takes either HSI or HSE as its input reference clock and multiplies it up to produce a higher output frequency, allowing the microcontroller to run at its maximum system clock speed even though the input oscillators (HSI/HSE) run at lower frequencies.
 - PLL input source can be selected as either HSI or HSE (via a configurable input MUX/divider).
 - The input clock is divided and then multiplied by configurable factors(down below) to produce the desired PLL output frequency.
@@ -48,13 +48,13 @@ The PLL is used to generate a higher-speed system clock from a lower-frequency i
 
 Note: PLL isn't multiply-only — it has input/output dividers too, so it can divide as well as multiply.
 
-#### LSE (Low Speed External Clock):
+#### 2.1.4 LSE (Low Speed External Clock):
 The LSE clock is generated using a 32.768 kHz low speed external crystal or ceramic resonator. It has the advantage of providing a low-power but highly accurate clock source to the real-time clock peripheral (RTC) for clock/calendar or other timing functions.
 
-#### LSI (Low Speed Internal Clock):
+#### 2.1.5 LSI (Low Speed Internal Clock):
 The LSI RC acts as a low-power clock source that can be kept running in Stop and Standby mode for the independent watchdog (IWDG) and Auto-wakeup unit (AWU). The clock frequency is around 32 kHz.
 
-### 2.3 SYSCLK vs. HCLK vs. FCLK (Cortex Clock)
+### 2.2 SYSCLK vs. HCLK vs. FCLK (Cortex Clock)
 SYSCLK: The System Clock (SYSCLK) serves as the primary clock source for the microcontroller. It can be sourced from various inputs like the internal HSI, external HSE, or a PLL. SYSCLK determines the clock speed for the AHB bus after passing through the AHB Prescaler.
 
 HCLK: The High-Speed Clock (HCLK) is essentially SYSCLK after it has been divided by the AHB Prescaler. HCLK is crucial because it feeds several critical components such as the Cortex core, the AHB bus, memory interfaces, and DMA controllers.
