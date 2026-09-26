@@ -142,6 +142,8 @@ Since our HCLK < 30 MHz, we don't need any wait cycles, and therefore no FLASH_A
 
 ![Wait](Wait.png)
 
+---
+
 ## 5. Driver Implementation
 
 ### 5.1 Initializing System Clock (`SystemClockInit`)
@@ -239,6 +241,8 @@ void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask) {
     3. **Respect Bus Limits**: APB1 maximum frequency is **42 MHz**, whereas AHB and APB2 can reach **84 MHz**.
     4. **Bus Synchronization**: Allow a small delay or execute a dummy read on the enable register before modifying peripheral registers.
 	5. **Wait States**: Flash wait states must be configured whenever HCLK exceeds the safe read threshold (30 MHz at typical VDD) — staying below it, as with our 24 MHz setup, lets you skip FLASH_ACR configuration entirely.
+
+---
 
 ## 7. RCC & Clock Tree Brush-Up Questions & Answers
 
