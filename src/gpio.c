@@ -28,11 +28,12 @@ void GPIO_Init(GPIO_TypeDef *port, const GPIO_Config *cfg){
         }
     }
 }
+
 void GPIO_WritePin(GPIO_TypeDef *port, uint8_t pin, uint8_t state){
     if(state) 
-        port->BSRR |= (0x1<<pin);
+        port->BSRR = (1UL<<pin);
     else
-        port->BSRR |= (0x1<<(pin+16));
+        port->BSRR = (1UL<<(pin+16UL));
 }
 
 uint8_t GPIO_ReadPin(GPIO_TypeDef *port, uint8_t pin)
@@ -43,24 +44,24 @@ uint8_t GPIO_ReadPin(GPIO_TypeDef *port, uint8_t pin)
     return 0xFF;
 }
 void GPIO_TogglePin(GPIO_TypeDef *port, uint8_t pin){
-    if (pin >= 16) return;
-    if (port->ODR & (1 << pin))
-        port->BSRR = (1 << (pin + 16));
+    if (pin >= 16UL) return;
+    if (port->ODR & (1UL << pin))
+        port->BSRR = (1UL << (pin + 16UL));
     else
-        port->BSRR = (1 << pin);
+        port->BSRR = (1Ul << pin);
 }
 
 void RCC_GPIOClockEnable(GPIO_TypeDef *port){
     if(port == GPIOA)
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+        RCC_AHB1_Enable(RCC_AHB1ENR_GPIOAEN);
     else if(port == GPIOB)
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+        RCC_AHB1_Enable(RCC_AHB1ENR_GPIOBEN);
     else if(port == GPIOC)
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+        RCC_AHB1_Enable(RCC_AHB1ENR_GPIOCEN);
     else if(port == GPIOD)
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+        RCC_AHB1_Enable(RCC_AHB1ENR_GPIODEN);
     else if(port == GPIOE)
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
+        RCC_AHB1_Enable(RCC_AHB1ENR_GPIOEEN);
     else if(port == GPIOH)
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
+        RCC_AHB1_Enable(RCC_AHB1ENR_GPIOHEN);
 }

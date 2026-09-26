@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 
+extern uint32_t pclk;
 
 #define PERIPH_BASE             0x40000000UL /*!< Peripheral base address in the alias region                                */
 #define AHB1PERIPH_BASE         (PERIPH_BASE + 0x00020000UL)
@@ -776,4 +777,9 @@ typedef struct
 
 void SystemClockInit(void);
 void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask);
+void RCC_AHB1_Enable(uint32_t mask);
+void RCC_AHB2_Enable(uint32_t mask);
+void RCC_APB1_Enable(uint32_t mask);
+void RCC_APB2_Enable(uint32_t mask);
+
 #endif

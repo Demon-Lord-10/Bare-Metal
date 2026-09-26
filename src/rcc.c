@@ -1,5 +1,6 @@
 #include "rcc.h"
 
+
 void SystemClockInit(void){
     
     //Turns on external oscillator
@@ -12,7 +13,8 @@ void SystemClockInit(void){
     RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSE
         | (25u  << RCC_PLLCFGR_PLLM_Pos)
         | (192u << RCC_PLLCFGR_PLLN_Pos)
-        | (3u   << RCC_PLLCFGR_PLLP_Pos);
+        | (3u   << RCC_PLLCFGR_PLLP_Pos)
+        | (4u << RCC_PLLCFGR_PLLQ_Pos);
 
     //Configuring APB1 APB2 and AHB
     RCC->CFGR &= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
@@ -32,4 +34,11 @@ void SystemClockInit(void){
 void RCC_ClockEnable(volatile uint32_t *enr, uint32_t mask){
     *enr |= mask;
 }
+
+void RCC_AHB1_Enable(uint32_t mask){ RCC_ClockEnable(&RCC->AHB1ENR, mask); }
+void RCC_AHB2_Enable(uint32_t mask){ RCC_ClockEnable(&RCC->AHB2ENR, mask); }
+void RCC_APB1_Enable(uint32_t mask){ RCC_ClockEnable(&RCC->APB1ENR, mask); }
+void RCC_APB2_Enable(uint32_t mask){ RCC_ClockEnable(&RCC->APB2ENR, mask); }
+
+uint32_t pclk = 24000000;
 

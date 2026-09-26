@@ -5,7 +5,7 @@ CFLAGS  := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard -O0 -g -Wa
 INCLUDES := -Iinc
 LDFLAGS := -T linker.ld -nostdlib -nostartfiles -Wl,--gc-sections
 
-SRCS  := startup.s src/main.c src/gpio.c src/rcc.c
+SRCS  := startup.s src/main.c src/gpio.c src/rcc.c src/uart.c
 OBJ_DIR := obj
 BUILD   := build
 
