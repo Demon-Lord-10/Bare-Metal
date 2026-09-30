@@ -1,4 +1,6 @@
 #include "uart.h"
+#include <stdarg.h>
+#include <stdint.h>
 
 GPIO_Config USART1_TX = {
     .pin = 9,               /* PA9 */
@@ -95,4 +97,81 @@ void USART_Write(USART_TypeDef *USART, const char *str, uint32_t size){
     for (uint32_t i = 0; i < size; i++) {
         USART_WriteByte(USART, (uint8_t)str[i]);
     }
+}
+
+void USART_Printf(USART_TypeDef *USART, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    while (*fmt) {
+        if (*fmt != '%') {
+            USART_WriteByte(USART, (uint8_t)*fmt++);
+            continue;
+        }
+
+        fmt++;
+
+        switch (*fmt) {
+            case 'c':{
+                USART_WriteByte(USART,(uint8_t)va_arg(args,int));
+                break;
+            }
+            case 's':{
+                const char* s = va_arg(args,const char *);
+                if (!s) s = "(null)";
+                while (*s) USART_WriteByte(USART, (uint8_t)*s++);
+                break;
+            }
+            case 'd':{
+                int32_t val = va_arg(args,int32_t);
+                char buf[11];
+                int i=0;
+                uint32_t u;
+
+                if(val < 0){
+                    USART_WriteByte(USART, '-');
+                    u = (uint32_t)(-(val + 1)) + 1;
+                }
+                else{ 
+                    u = (uint32_t)val;
+                }
+                if (u == 0) buf[i++] = '0';
+                while (u > 0) {
+                    buf[i++] = '0' + (u % 10);
+                    u /= 10;
+                }
+                while (i--) USART_WriteByte(USART, buf[i]);
+                break;
+                }
+            case 'u':{
+                uint32_t val = va_arg(args,uint32_t);
+                char buf[10];
+                int i=0;
+
+                if(val == 0) buf[i++] = '0';
+                while(val>0){
+                    buf[i++] = '0' + (val%10);
+                    val/=10;
+                }
+                while(i--) USART_WriteByte(USART, buf[i]);
+                break;
+            }
+            case '%':{ 
+                USART_WriteByte(USART, '%'); 
+                break;
+            }
+            case '\0':{
+                      va_end(args);
+                      return;
+            }
+            default:  /* unknown: print it as-is */
+                      USART_WriteByte(USART, '%');
+                      USART_WriteByte(USART, (uint8_t)*fmt);
+                      break;
+        }
+        fmt++;
+    }
+
+    va_end(args);
 }

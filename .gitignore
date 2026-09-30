@@ -7,6 +7,9 @@ build/
 # ignore obj
 obj/
 
+# ignore map
+map/
+
 # ignore generated docs site
 site/
 

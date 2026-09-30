@@ -2,6 +2,7 @@
 #define UART_H
 
 #include <stdint.h>
+#include <stdarg.h>
 #include "rcc.h"
 #include "gpio.h"
 
@@ -191,5 +192,7 @@ void USART_Init(USART_TypeDef *USART ,uint32_t baudrate);
 void USART_WriteByte(USART_TypeDef *USART, uint8_t data);
 uint8_t USART_ReadByte(USART_TypeDef *USART);
 void USART_Write(USART_TypeDef *USART, const char *str, uint32_t size);
+void USART_Printf(USART_TypeDef *USART,const char *fmt,...);
+
 
 #endif

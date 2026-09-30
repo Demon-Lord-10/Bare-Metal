@@ -1,43 +1,48 @@
 CC      := arm-none-eabi-gcc
 OBJCOPY := arm-none-eabi-objcopy
+SIZE    := arm-none-eabi-size
 
-CFLAGS  := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard -O0 -g -Wall
-INCLUDES := -Iinc
-LDFLAGS := -T linker.ld -nostdlib -nostartfiles -Wl,--gc-sections
-
-SRCS  := startup.s src/main.c src/gpio.c src/rcc.c src/uart.c
 OBJ_DIR := obj
 BUILD   := build
+MAP_DIR := map
+TARGET  := firmware
 
-TARGET := firmware
+CFLAGS   := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard \
+            -O0 -g -Wall -ffunction-sections -fdata-sections
+INCLUDES := -Iinc
+LDFLAGS  := -T linker.ld -nostdlib -nostartfiles -Wl,--gc-sections \
+            -Wl,-Map=$(MAP_DIR)/$(TARGET).map
 
-# Route every source's .o into obj/, flattening any subdirectory
-OBJS := $(addprefix $(OBJ_DIR)/,$(notdir $(SRCS)))
-OBJS := $(OBJS:.c=.o)
-OBJS := $(OBJS:.s=.o)
+# Auto-discover every .c and .s in src/
+SRCS := $(wildcard src/*.c src/*.s)
+OBJS := $(patsubst src/%,$(OBJ_DIR)/%.o,$(SRCS))
 
+# define interface and target for OPENOCD
 OPENOCD_INTERFACE := interface/stlink.cfg
-OPENOCD_TARGET     := target/stm32f4x.cfg
+OPENOCD_TARGET    := target/stm32f4x.cfg
 
-all: $(BUILD)/$(TARGET).bin
+all: $(BUILD)/$(TARGET).bin size
 
-$(OBJ_DIR) $(BUILD):
+$(OBJ_DIR) $(BUILD) $(MAP_DIR):
 	mkdir -p $@
 
-$(OBJ_DIR)/%.o: src/%.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+$(OBJ_DIR)/%.c.o: src/%.c | $(OBJ_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -c $< -o $@
 
-$(OBJ_DIR)/%.o: %.s | $(OBJ_DIR)
+$(OBJ_DIR)/%.s.o: src/%.s | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/$(TARGET).elf: $(OBJS) | $(BUILD)
+$(BUILD)/$(TARGET).elf: $(OBJS) | $(BUILD) $(MAP_DIR)
 	$(CC) $(OBJS) $(CFLAGS) $(LDFLAGS) -o $@
 
 $(BUILD)/$(TARGET).bin: $(BUILD)/$(TARGET).elf
 	$(OBJCOPY) -O binary $< $@
 
+size: $(BUILD)/$(TARGET).elf
+	$(SIZE) $<
+
 clean:
-	rm -rf $(OBJ_DIR) $(BUILD)
+	rm -rf $(OBJ_DIR) $(BUILD) $(MAP_DIR)
 
 flash: $(BUILD)/$(TARGET).elf
 	openocd -f $(OPENOCD_INTERFACE) -f $(OPENOCD_TARGET) \
@@ -46,4 +51,6 @@ flash: $(BUILD)/$(TARGET).elf
 doc:
 	mkdocs gh-deploy
 
-.PHONY: all clean flash doc
+-include $(OBJS:.o=.d)
+
+.PHONY: all clean flash doc size

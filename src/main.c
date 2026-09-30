@@ -1,18 +1,16 @@
-#include "gpio.h"
+#include "rcc.h"
+#include "uart.h"
 
-GPIO_Config gpio_PC13 ={
-    .pin = 13,
-    .mode = GPIO_MODE_OUTPUT,
-    .pull = GPIO_PUPD_NONE,
-    .speed = GPIO_SPEED_HIGH,
-    .otype = GPIO_OTYPE_PP,
-};
+void Uart_init(){
+    USART_Init(USART2,115200UL);
+}
 
 int main(){
-
-    GPIO_Init(GPIOC , &gpio_PC13);
-    GPIO_WritePin(GPIOC,13,0);
-
-    while(1);
+    SystemClockInit();
+    Uart_init();
+    while(1){
+        for(volatile int i=0;i<1000000UL;i++);
+        USART_Printf(USART2, "Hello\r\n");
+    }
     return 0;
 }
